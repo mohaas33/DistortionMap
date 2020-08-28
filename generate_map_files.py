@@ -55,7 +55,7 @@ introduction = [
 ff= open("./run_all_map_jobs.sh","w+")
 ff.write("#!/usr/bin/bash"+"\n")
 
-for i in range(0,10):
+for i in range(10,30):
     filename = "./macros/run_files_map_{}.sh".format(i*10)
     f= open(filename,"w+")
     f.write("#!/usr/bin/bash"+"\n")

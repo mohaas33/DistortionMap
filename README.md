@@ -19,10 +19,39 @@ cd build
 make -j 4
 make install
 ```
-
-Currently have a problem:
-```
-./.libs/libCalculateDistortions.so: undefined reference to `Fun4AllHistoManager::Fun4AllHistoManager(std::string const&)'
-./.libs/libCalculateDistortions.so: undefined reference to `Fun4AllHistoManager::dumpHistos(std::string const&, std::string const&)'
-```
 - reading first file:
+
+... (to be updated)
+
+
+Workflow:
+- Files with G4Hits from 100'000 Hijing events: __/sphenix/sim/sim01/sphnxpro/Micromegas/2/G4Hits_sHijing_0-12fm_*__
+
+- File with  bunchcrossing id and time (ns) assuming 106ns between bunches and 50kHz collision rate: __timestamps_50kHz.txt__. The file is used to mimic the bunchcrossing;
+
+- Running over G4Hits containers in the files is performed with Fun4All environment. Main code is Fun4All_FillChargesMap.C, it is run with run_files.sh, which takes as an input the first and last file number:
+```
+#This will run first 5 files with G4Hits and create 5 files 
+#with TTree in Files directory:
+source macros/run_files.sh 0 5 
+```
+
+-  As soon as files are available the histogram is filled with:
+```
+#This will run over hits and fill 10 TH3D space charge density distributions 
+#for 10 events after 50-th event appeared in the TPC after it is fully filled 
+#with ions, currently after 734587 bunchcrossing:
+root -l -b -q macros/run_analysis.C(50)   
+```
+- To create bunch of bash files and condor job files to start condor jobs 2 scripts are available:
+```
+#Run through G4Hits:
+generate_files.py
+#Make TH3D maps:
+generate_map_files.py
+```
+- Scripts above will also generate bash files to submit all jobs, __all bash scripts created aboveshould be provided executable rights before that__:
+```
+../run_all_jobs.sh  
+../run_all_map_jobs.sh
+```

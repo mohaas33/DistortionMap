@@ -46,6 +46,7 @@ void getSpaceCharge(){
   char fname[100];
   const int nFiles = 1;
   TH3D *hCharge[nFiles];
+  TH3D *hCharge_tot=new TH3D("hCharge_tot","SC (ions) per m^3;phi (rad);r (m);z (m)",nphi,0,6.28319,nr,rmin,rmax,nz,0,z_rdo);
   
   for (int i=0;i<nFiles;i++){
   
@@ -58,22 +59,31 @@ void getSpaceCharge(){
     sprintf(fname, "/sphenix/user/shulga/Work/IBF/DistortionMap/Files/slim_G4Hits_sHijing_0-12fm_%06d_%06d.root",eventsInFileStart,eventsInFileEnd);
     //sprintf(fname, "./slim_G4Hits_sHijing_0-12fm_000000_001000.root");
     chanT->Add(fname);
-    int bX=7343773;
-    chanT->Draw(Form("hit_z+(%d-event_bunchXing)*106*%f:hit_r:hit_phi>> hCharge_tmp",bX,vIon*ns),Form("(hit_eion*%f)*(event_bunchXing<%d)",Tpc_ElectronsPerGeV,bX)); //A map for event right after bunch xing bX has occurred
-    chanT->Draw(Form("1.05-(%d-event_bunchXing)*106*%f:hit_r:hit_phi>>+hCharge_tmp",bX,vIon*ns),Form("(ibf_vol)*(event_bunchXing<%d && isOnPlane)",bX)); //A map of IBF for event right after bunch xing B has occurred
-    hCharge[i]=(TH3D*)hCharge_tmp->Clone(Form("h_Charge_%06d_%06d",eventsInFileStart,eventsInFileEnd));
+    //734352 bunches to fill the TPC
+    int bX=734587;//first one after which TPC has bee filled according to timestamps_50kHz.txt 
+    chanT->Draw(Form("hit_z+(%d-event_bunchXing)*106*%.10f:hit_r:hit_phi>> hCharge_tmp",bX,vIon*ns),Form("(hit_eion*%f)*(event_bunchXing<%d)",Tpc_ElectronsPerGeV,bX)); //A map for event right after bunch xing bX has occurred
+    chanT->Draw(Form("1.05-(%d-event_bunchXing)*106*%.10f:hit_r:hit_phi>>+hCharge_tmp",bX,vIon*ns),Form("(ibf_vol)*(event_bunchXing<%d && isOnPlane)",bX)); //A map of IBF for event right after bunch xing B has occurred
+    hCharge[i]=(TH3D*)hCharge_tmp->Clone("h_Charge_tot");
+    if(i==0){
+      hCharge_tot=(TH3D*)hCharge_tmp->Clone(Form("h_Charge_%06d_%06d",eventsInFileStart,eventsInFileEnd));
+    }else{
+      hCharge_tot->Add(hCharge_tmp);
+    }
   }
+  TFile outputFile ("outputFile.root","RECREATE");
+  hCharge_tot->Write();
+  outputFile.Close();
 
   TCanvas *c = new TCanvas();
   hCharge[0]->Draw();
   c->Print("./charges.png");
-
+  
   TCanvas *c_xy = new TCanvas();
   c_xy->GetPad(0)->SetLogz();
   c_xy->SetRightMargin(0.15);
   hCharge[0]->Project3D("xy")->Draw("colz");
   c_xy->Print("./charges_xy.png");
-
+  
   TCanvas *c_z = new TCanvas();
   hCharge[0]->Project3D("z")->Draw("HIST");
   c_z->Print("./charges_z.png");
