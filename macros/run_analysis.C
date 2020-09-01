@@ -38,9 +38,9 @@ std::vector<int> readBeamXings(){
 }
 
 
-void run_analysis(int bXbias = 10){
+void run_analysis(int bXbias = 10, const int startFiles = 0,const int nFiles = 5){
     char fname[250];
-    const int nFiles = 5;
+
     const int nHist = 10;
     int bX = 734587;
     //int bXbias = 10;//0;
@@ -49,7 +49,7 @@ void run_analysis(int bXbias = 10){
     //TH3D *hCharge[nFiles];
     //TFile *f[nFiles];
     TH3D *hCharge_tot[nHist];//=new TH3D("hCharge_tot","SC (ions) per m^3;phi (rad);r (m);z (m)",nphi,0,6.28319,nr,rmin,rmax,nz,0,z_rdo);
-    for (int i=0;i<nFiles;i++){       
+    for (int i=startFiles;i<nFiles;i++){       
         int eventsInFileStart = i*1000;
         int eventsInFileEnd = (i+1)*1000;
         //cout<<"bX="<<bXs.at(i)<<endl;

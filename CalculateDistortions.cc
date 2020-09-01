@@ -268,7 +268,7 @@ int CalculateDistortions::process_event(PHCompositeNode *topNode)
         hCharge->Fill(phi,r,zprim,N_electrons/vol); //primary ion, drifted by t0, in cm
         hCharge_RPhi->Fill(phi,r,N_electrons/vol); //primary ion, drifted by t0, in cm
         _isOnPlane = 0;
-        if(!IsOverFrame(r*mm,phi)){
+        if(!IsOverFrame(r/mm,phi)){
           hCharge->Fill(phi,r,zibf,N_electrons*ionsPerEle/vol); //amp ion, drifted by t0, in cm
           hCharge_RPhi->Fill(phi,r,N_electrons*ionsPerEle/vol); ///amp ion, drifted by t0, in cm
           hChargePlane->Fill(phi,r,zprim,w_gain*_ampGain/vol);
@@ -314,8 +314,8 @@ int CalculateDistortions::End(PHCompositeNode *topNode)
 {
   //_rawHits->Draw("hit_r:hit_phi:hit_z >> hCharge_v1","(hit_eion)*(event_timestamp>0)");
   int bX=7343773;
-  _rawHits->Draw(Form("hit_r:hit_phi:hit_z+(%d-event_bunchXing)*106*%f>> hCharge_v1",bX,vIon/(m/ns)),Form("(hit_eion*%f)*(event_bunchXing<%d)",Tpc_ElectronsPerGeV,bX)); //A map for event right after bunch xing bX has occurred	
-  _rawHits->Draw(Form("hit_r:hit_phi:1.05-(%d-event_bunchXing)*106*%f>>+hCharge_v1",bX,vIon/(m/ns)),Form("(ibf_vol)*(event_bunchXing<%d && isOnPlane)",bX)); //A map of IBF for event right after bunch xing B has occurred
+  _rawHits->Draw(Form("hit_r:hit_phi:hit_z-(%d-event_bunchXing)*106*%.10f>> hCharge_v1",bX,vIon/(m/ns)),Form("(hit_eion*%f)*(event_bunchXing<%d)",Tpc_ElectronsPerGeV,bX)); //A map for event right after bunch xing bX has occurred	
+  _rawHits->Draw(Form("hit_r:hit_phi:1.05-(%d-event_bunchXing)*106*%.10f>>+hCharge_v1",bX,vIon/(m/ns)),Form("(ibf_vol)*(event_bunchXing<%d && isOnPlane)",bX)); //A map of IBF for event right after bunch xing B has occurred
 
   outfile->cd();
   //ntup->Write();

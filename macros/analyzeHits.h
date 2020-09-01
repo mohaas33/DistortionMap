@@ -32,7 +32,7 @@ public :
    Float_t         event_timestamp;
    Float_t         event_bunchXing;
 
-
+   //TTree *_tree = 0;
    // List of branches
    TBranch        *b_isOnPlane;   //!
    TBranch        *b_hit_z;   //!
@@ -48,7 +48,9 @@ public :
    std::vector<int> beamXings;
    int beamXing = 734587;
    int beamXingBias = 0;
-   analyzeHits(TString FileName="/sphenix/user/shulga/Work/IBF/DistortionMap/Files/slim_G4Hits_sHijing_0-12fm_000000_001000.root");
+   int f15kHz = 0;
+
+   analyzeHits(TString FileName="/sphenix/user/shulga/Work/IBF/DistortionMap/Files/slim_G4Hits_sHijing_0-12fm_000000_001000.root",  TTree *_tree=0);
    virtual ~analyzeHits();
    virtual Int_t    Cut(Long64_t entry);
    virtual Int_t    GetEntry(Long64_t entry);
@@ -61,25 +63,29 @@ public :
    virtual void     SetBeamXings(std::vector<int> beamXs);
    virtual void     SetBeamXing(int beamX);
    virtual void     SetBeamXingBias(int beamXbias);
+   //virtual void     SetTree(TTree *tree);
+   virtual void     RunLaser15kHz(int fkHz = 1);
+
 };
 
 #endif
 
 #ifdef analyzeHits_cxx
-analyzeHits::analyzeHits(TString FileName) : fChain(0) 
+analyzeHits::analyzeHits(TString FileName, TTree *_tree) : fChain(0) 
 {
 
-   // if parameter tree is not specified (or zero), connect the file
+   // if parameter _tree is not specified (or zero), connect the file
    // used to generate this class and read the Tree.
-   TTree *tree;
+   //TTree *_tree;
 
-   TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject(FileName);
-   if (!f || !f->IsOpen()) {
-      f = new TFile(FileName);
+   if (_tree == 0) {
+      TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject(FileName);
+      if (!f || !f->IsOpen()) {
+       f = new TFile(FileName);
+      }
+      f->GetObject("hTree",_tree);
    }
-   f->GetObject("hTree",tree);
-
-   Init(tree);
+   Init(_tree);
 }
 
 analyzeHits::~analyzeHits()
@@ -165,6 +171,12 @@ void analyzeHits::SetBeamXing(int beamX){
 }
 void analyzeHits::SetBeamXingBias(int beamXbias){
    beamXingBias = beamXbias;
+}
+//void analyzeHits::SetTree(TTree *tree){
+//   _tree = tree;
+//}
+void analyzeHits::RunLaser15kHz(int fkHz){
+   f15kHz = fkHz;
 }
 Int_t analyzeHits::Cut(Long64_t entry)
 {
