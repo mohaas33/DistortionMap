@@ -14,6 +14,7 @@
 
 // Header file for the classes stored in the TTree if any.
 
+
 class analyzeHits {
 public :
    TTree          *fChain;   //!pointer to the analyzed TTree or TChain
@@ -49,7 +50,8 @@ public :
    int beamXing = 734587;
    int beamXingBias = 0;
    int f15kHz = 0;
-
+   int fPrim = 0;
+   
    analyzeHits(TString FileName="/sphenix/user/shulga/Work/IBF/DistortionMap/Files/slim_G4Hits_sHijing_0-12fm_000000_001000.root",  TTree *_tree=0);
    virtual ~analyzeHits();
    virtual Int_t    Cut(Long64_t entry);
@@ -65,6 +67,7 @@ public :
    virtual void     SetBeamXingBias(int beamXbias);
    //virtual void     SetTree(TTree *tree);
    virtual void     RunLaser15kHz(int fkHz = 1);
+   virtual void     RunPrim(int fprim = 1);
 
 };
 
@@ -178,6 +181,10 @@ void analyzeHits::SetBeamXingBias(int beamXbias){
 void analyzeHits::RunLaser15kHz(int fkHz){
    f15kHz = fkHz;
 }
+void analyzeHits::RunPrim(int fprim = 1){
+   fPrim = fprim;
+}
+
 Int_t analyzeHits::Cut(Long64_t entry)
 {
 // This function may be called from Loop.

@@ -7,7 +7,6 @@
 #include <TStyle.h>
 #include <TCanvas.h>
 
-
 void GetPadCenter(double r, double phi, int &rsec, int &nsec, int &padNr, int &padNphi, double &rin, double &cntrr, double &cntrphi);
 
 void GetPadCenter(double r, double phi, int &rsec, int &nsec, int &padNr, int &padNphi, double &rin, double &cntrr, double &cntrphi){
@@ -31,19 +30,23 @@ void GetPadCenter(double r, double phi, int &rsec, int &nsec, int &padNr, int &p
   padNr=0;
   rsec=0;
   rin=0;
-    double pad_r=0;
+  int npads=0;    
+  double pad_r=0;
     if (r>=tpc_frame_r1_inner+tpc_margin && r<=tpc_frame_r1_outer+tpc_margin){
         rsec = 1;
+        npads=6*16;
         pad_r = (tpc_frame_r1_outer - tpc_frame_r1_inner)/16;
         rin = tpc_frame_r1_inner;
     }
     if (r>=tpc_frame_r2_inner+tpc_margin && r<=tpc_frame_r2_outer+tpc_margin){
         rsec = 2;
+        npads=8*16;
         pad_r = (tpc_frame_r2_outer - tpc_frame_r2_inner)/16;
         rin = tpc_frame_r2_inner;
     }
     if (r>=tpc_frame_r3_inner+tpc_margin and r<=tpc_frame_r3_outer+tpc_margin){
         rsec = 3;
+        npads=12*16;
         pad_r = (tpc_frame_r3_outer - tpc_frame_r3_inner)/16;
         rin = tpc_frame_r3_inner;
     }
@@ -58,15 +61,15 @@ void GetPadCenter(double r, double phi, int &rsec, int &nsec, int &padNr, int &p
     int nsectors=phi/sectorangle;
     nsec=floor(nsectors)+1;
     //if(r>tpc_frame_r1_inner)cout<<sectorangle*r/5<<endl;
-    double arc_length = (phi-(nsec)*sectorangle)*r;
-    padNphi = floor(arc_length/5);
-    cntrphi = (nsec)*sectorangle + (double(padNphi)+0.5)*5/cntrr;
+    double arc_length = (phi-(nsec)*sectorangle)*r-tpc_frame_side_width;
+    double pad_length =  M_PI/6/npads * r;
+    padNphi = floor(arc_length/pad_length);
+    cntrphi = (nsec)*sectorangle + (double(padNphi)+0.5)*pad_length/cntrr;
  
     
     
     
     nsec++;
-
 
 }
 
@@ -98,7 +101,7 @@ void analyzeHits::Loop()
 
 
 
-
+   int fT=0;//0 - no time; 1 - with time
 
   double f=0.5;//for now, just pick the middle of the hit.  Do better later.
   double ns=1e-9,us=1e-6,ms=1e-3,s=1;
@@ -108,7 +111,8 @@ void analyzeHits::Loop()
   //used two ways:  1) to apply units to variables when defined
   //                2) to divide by certain units so that those variables are expressed in those units.
 
-  double ionMobility=3.37*cm*cm/V/s;
+  //double ionMobility=3.37*cm*cm/V/s;
+  double ionMobility=1.65*cm*cm/V/s;
   double vIon=ionMobility*400*V/cm;
   //float vIon=16.0*um/us;
   //float mbRate=_freqKhz*kHz;
@@ -117,13 +121,17 @@ void analyzeHits::Loop()
   double z_rdo=105.5*cm;
   double rmin=20*cm;
   double rmax=78*cm;
+  double tmin=0;
+  double tmax=160*ms;
 
   double Ne_dEdx = 1.56/cm;   // keV/cm                                                                                                            
   double CF4_dEdx = 7.00/cm;  // keV/cm                                                                                                            
   double Ne_NTotal = 43/cm;    // Number/cm                                                                                                        
   double CF4_NTotal = 100/cm;  // Number/cm                                                                                                        
-  double Tpc_NTot = 0.90 * Ne_NTotal + 0.10 * CF4_NTotal;
-  double Tpc_dEdx = 0.90 * Ne_dEdx + 0.10 * CF4_dEdx;
+  //double Tpc_NTot = 0.90 * Ne_NTotal + 0.10 * CF4_NTotal;
+  //double Tpc_dEdx = 0.90 * Ne_dEdx + 0.10 * CF4_dEdx;
+  double Tpc_NTot = 0.50 * Ne_NTotal + 0.50 * CF4_NTotal;
+  double Tpc_dEdx = 0.50 * Ne_dEdx   + 0.50 * CF4_dEdx;
   double Tpc_ElectronsPerKeV = Tpc_NTot / Tpc_dEdx;
   double Tpc_ElectronsPerGeV = Tpc_NTot / Tpc_dEdx*1e6; //electrons per gev.                                                                       
 
@@ -131,28 +139,44 @@ void analyzeHits::Loop()
   int nr=159;
   int nphi=360;
   int nz=62*2;
+  int nt=1600;
  
 
   char fname[100];
   const int nHist = 10;
+   int NHistToRun=nHist;
+   if(fPrim==1)NHistToRun=1;
+
   TH3D *hCharge[nHist];
+  TH3D *hIBFCharge[nHist];
+  TH3D *hChargeT[nHist];
   TH3D *heCharge[nHist];
-  TH2D *heChargePad[nHist];
-  TH2D *heChargePadXY[nHist];
+  TH3D *heChargeT[nHist];
+  TH3D *heChargeTPad[nHist];
+  //TH2D *heChargePad[nHist];
+  //TH2D *heChargePadXY[nHist];
   for(int hi=0;hi<nHist;hi++){
-     hCharge[hi]=new TH3D(Form("h_Charge_%d",hi),"SC (ions) per m^3;phi (rad);r (m);z (m)",nphi,0,6.28319,nr,rmin,rmax,nz,0,z_rdo);
-     heCharge[hi]=new TH3D(Form("h_eCharge_%d",hi),"Charge (electrons) per m^3;phi (rad);r (m);z (m)",nphi,0,6.28319,nr,rmin,rmax,nz,0,z_rdo);
-     heChargePad[hi]=new TH2D(Form("h_eChargePad_%d",hi),"Charge (electrons) per m^3;phi (rad);r (m);z (m)",nphi,0,6.28319,nr,rmin,rmax);
-     heChargePadXY[hi]=new TH2D(Form("h_eChargePadXY_%d",hi),"Charge (electrons) per m^3;phi (rad);r (m);z (m)",1600*4,-0.8,0.8,1600*4,-0.8,0.8);
+     if(fT==0){
+        hCharge[hi]=new TH3D(Form("h_Charge_%d",hi),      "SC (ions) ;phi (rad);r (m);z (m)",nphi,0,6.28319,nr,rmin,rmax,2*nz,-z_rdo,z_rdo);
+        hIBFCharge[hi]=new TH3D(Form("h_IBFCharge_%d",hi),"SC (ions) ;phi (rad);r (m);z (m)",nphi,0,6.28319,nr,rmin,rmax,2*nz,-z_rdo,z_rdo);
+     }
+     if(fT==0)heCharge[hi]=new TH3D(Form("h_eCharge_%d",hi),"Charge (electrons) ;phi (rad);r (m);z (m)",nphi,0,6.28319,nr,rmin,rmax,2*nz,-z_rdo,z_rdo);
+     if(fT==1)hChargeT[hi]=new TH3D(Form("h_ChargeT_%d",hi),"SC (ions) ;phi (rad);r (m);t (sec)",nphi,0,6.28319,nr,rmin,rmax,nt,tmin,tmax);
+     if(fT==1)heChargeT[hi]=new TH3D(Form("h_eChargeT_%d",hi),"Charge (electrons) ;phi (rad);r (m);t (sec)",nphi,0,6.28319,nr,rmin,rmax,nt,tmin,tmax);
+     if(fT==1)heChargeTPad[hi]=new TH3D(Form("h_eChargeTPad_%d",hi),"Charge (electrons) ;phi (rad);r (m);t (sec)",nphi,0,6.28319,nr,rmin,rmax,nt,tmin,tmax);
+     //heChargePad[hi]=new TH2D(Form("h_eChargePad_%d",hi),"Charge (electrons) per m^3;phi (rad);r (m);z (m)",nphi,0,6.28319,nr,rmin,rmax);
+     //heChargePadXY[hi]=new TH2D(Form("h_eChargePadXY_%d",hi),"Charge (electrons) per m^3;phi (rad);r (m);z (m)",1600,-0.8,0.8,1600,-0.8,0.8);
   }
    //734352 bunches to fill the TPC
    //int bX=734587;//first one after which TPC has been filled according to timestamps_50kHz.txt 
-   int bX = beamXing;
+   double bX = beamXing;
    std::vector<int>::iterator it = std::find(beamXings.begin(), beamXings.end(), bX);
-   int index; 
-   index = std::distance(beamXings.begin(), it) + beamXingBias;
+   int index=0; 
+   if(fPrim!=1)index = std::distance(beamXings.begin(), it) + beamXingBias;
    if(f15kHz==1)index = std::distance(beamXings.begin(), it);
-   //int evtN=0;
+   
+   int evtN=-1;
+   double event_timestamp_tmp=0;
    if (fChain == 0) return;
 
    Long64_t nentries = fChain->GetEntriesFast();
@@ -166,17 +190,47 @@ void analyzeHits::Loop()
       // if (Cut(ientry) < 0) continue;
       //cout<<"index="<<index<<endl;
       //beamXings
-      for(int hi=0;hi<nHist;hi++){
+      if (evtN==-1 || event_timestamp_tmp!=event_timestamp){
+         evtN++;
+         event_timestamp_tmp=event_timestamp;
+      }
+   
+      for(int hi=0;hi<NHistToRun;hi++){
          bX = beamXings.at(index+hi);
-         if(f15kHz==1)bX = beamXings.at(index)+(hi+beamXingBias)*38860;
+         if(f15kHz==1)bX = beamXings.at(index)+double(hi+beamXingBias)*62830/2;//105.5/(1.65*400)/106 *1e9/24
+         if(fPrim==1)bX = 1508004-double(hi+beamXingBias+evtN)*1508004/1e5+event_bunchXing;//105.5/(1.65*400)/106 *1e9/24
          double phi = hit_phi;
          double r = hit_r;
-         double z_prim = hit_z-(bX-event_bunchXing)*106*vIon*ns;
-         double z_ibf = 1.05-(bX-event_bunchXing)*106*vIon*ns;
+         double z_prim = -1*1e10;
+         double z_ibf =  -1*1e10;
+         int f_fill_prim=1;
+         int f_fill_ibf=1;
+         if(hit_z>=0){
+            z_prim = hit_z-(bX-event_bunchXing)*106*vIon*ns;
+            z_ibf = 1.05-(bX-event_bunchXing)*106*vIon*ns;
+            if(z_prim<=0 ){
+               f_fill_prim=0;
+            }
+            if( z_ibf<=0){
+               f_fill_ibf=0;
+            }
+         }
+         if(hit_z<0){
+            z_prim = hit_z+(bX-event_bunchXing)*106*vIon*ns;
+            z_ibf = -1.05+(bX-event_bunchXing)*106*vIon*ns;
+            if(z_prim>=0 ){
+               f_fill_prim=0;
+            }
+            if( z_ibf>=0){
+               f_fill_ibf=0;
+            }
+         }
+
+         double t_ibf = z_ibf/vIon;
          //cout<<"z_prim = "<<z_prim<<endl;
          //cout<<"bX-event_bunchXing = "<<bX<<"-"<<event_bunchXing<<endl;
          //cout<<"|----------------------------------------------|"<<endl;
-         //evtN++;
+         
          //if(evtN==1){
          //   cout<<z_prim <<"="<< hit_z<<"+("<<bX<<"-"<<event_bunchXing<<")*"<<106*vIon*ns <<endl;
          //   cout<<z_prim <<"="<< hit_z<<"+("<<bX-event_bunchXing<<")*"<<106*vIon*ns <<endl;
@@ -185,7 +239,7 @@ void analyzeHits::Loop()
          double w_ibf = ibf_vol;
          double w_charge = amp_ele_vol*hit_eion*Tpc_ElectronsPerGeV;
          if(event_bunchXing<bX){
-            hCharge[hi]->Fill(phi,r,z_prim,w_prim);
+            if(fT==0 && f_fill_prim==1)hCharge[hi]->Fill(phi,r,z_prim,w_prim);
             if(isOnPlane){
                int rsec=0; // number of sector in r
                int nsec=0; // number of sector in phi
@@ -195,30 +249,56 @@ void analyzeHits::Loop()
                double cntrphi = 0; // pad center in ph
                double rin=0;
                GetPadCenter(r*1e3, phi, rsec, nsec, padNr, padNphi, rin, cntrr, cntrphi);              
-               heCharge[hi]->Fill(phi,r,hit_z,w_charge);
-               heChargePad[hi]->Fill(cntrphi,cntrr/1e3,w_charge);
-               double x = cntrr/1e3*sin(cntrphi);
-               double y = cntrr/1e3*cos(cntrphi);
-               heChargePadXY[hi]->Fill(x,y,w_charge);
+               if(fT==0 && f_fill_ibf==1)heCharge[hi]->Fill(phi,r,z_ibf,w_charge);
+               if(fT==1 && f_fill_ibf==1){
+                  heChargeT[hi]->Fill(phi,r,t_ibf,w_charge);
+                  heChargeTPad[hi]->Fill(cntrphi,cntrr/1e3,t_ibf,w_charge);
+               }
+               //heChargePad[hi]->Fill(cntrphi,cntrr/1e3,w_charge);
+               //double x = cntrr/1e3*sin(cntrphi);
+               //double y = cntrr/1e3*cos(cntrphi);
+               //heChargePadXY[hi]->Fill(x,y,w_charge);
 
-               hCharge[hi]->Fill(phi,r,z_ibf,w_ibf);
+               if(fT==0 && f_fill_ibf==1){
+                  if(hit_z<0 && z_ibf>0){
+                   cout<<"hit_z="<<hit_z<<" z_ibf="<<z_ibf<<endl;
+                  }
+                  hCharge[hi]->Fill(phi,r,z_ibf,w_ibf);
+                  hIBFCharge[hi]->Fill(phi,r,z_ibf,w_ibf);
+               }
+               if(fT==1 && f_fill_ibf==1)hChargeT[hi]->Fill(phi,r,t_ibf,w_ibf);
             }
          }
       }
+
+      
    }
-   
-   TFile outputFile (outputFileName,"RECREATE");
-   for(int hi=0;hi<nHist;hi++){
-      hCharge[hi]->Write();
-   }
-   outputFile.Close();
    cout<<outputFileName<<endl;
    TString s_search = "/Files/";
    int s_start = outputFileName.Index(s_search);
    int s_end = outputFileName.Length();
    int s_len = s_search.Length();
-   TString outputFileName_e = outputFileName(0,s_start) + "/Files/e_"+outputFileName(s_start+s_len,s_end);
+   TString s_put = "/Files/";
+   TString s_put_e = "/Files/e_";
+   if(fT==1){
+      s_put = "/Files/t_";
+      s_put_e = "/Files/e_t_";
+   }
+   outputFileName = outputFileName(0,s_start) + s_put+outputFileName(s_start+s_len,s_end);
+   TString outputFileName_e = outputFileName(0,s_start) + s_put_e+outputFileName(s_start+s_len,s_end);
    cout<<outputFileName_e<<endl;
+
+
+   TFile outputFile (outputFileName,"RECREATE");
+   for(int hi=0;hi<NHistToRun;hi++){
+      if(fT==0){
+         hCharge[hi]->Write();
+         hIBFCharge[hi]->Write();
+      
+      }
+      if(fT==1)hChargeT[hi]->Write();
+   }
+   outputFile.Close();
 
    //std::string subject = outputFileName;
    //std::string 
@@ -230,10 +310,14 @@ void analyzeHits::Loop()
    //}
 
    TFile e_outputFile (outputFileName_e ,"RECREATE");
-   for(int hi=0;hi<nHist;hi++){
-      heCharge[hi]->Write();
-      heChargePad[hi]->Write();
-      heChargePadXY[hi]->Write();
+   for(int hi=0;hi<NHistToRun;hi++){
+      if(fT==0)heCharge[hi]->Write();
+      if(fT==1){
+         heChargeT[hi]->Write();
+         heChargeTPad[hi]->Write();
+      }
+      //heChargePad[hi]->Write();
+      //heChargePadXY[hi]->Write();
    }
    e_outputFile.Close();
 

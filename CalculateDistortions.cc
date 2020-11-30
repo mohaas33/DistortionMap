@@ -85,10 +85,10 @@ CalculateDistortions::CalculateDistortions(const std::string &name, const std::s
  , hm(nullptr)
  , _filename(filename)
  , outfile(nullptr)
- ,hCharge(nullptr)
- ,hChargePlane(nullptr)
- ,hCharge_v1(nullptr)
- ,hCharge_RPhi(nullptr)
+ //,hCharge(nullptr)
+ //,hChargePlane(nullptr)
+ //,hCharge_v1(nullptr)
+ //,hCharge_RPhi(nullptr)
  ,_ampGain(2e3)
  ,_ampIBFfrac(0.02)
 
@@ -111,14 +111,14 @@ int CalculateDistortions::Init(PHCompositeNode *topNode)
   hm = new Fun4AllHistoManager("HITHIST");
   outfile = new TFile(_filename.c_str(), "RECREATE");
 
-  hCharge=new TH3D("sphenix_minbias_charge","SC (ions) per m^3;phi (rad);r (m);z (m)",nphi,0,6.28319,nr,rmin,rmax,nz,0,z_rdo);
-  hm->registerHisto(hCharge);
-  hChargePlane=new TH3D("sphenix_minbias_charge_plane","SC (ions) per m^3;phi (rad);r (m);z (m)",nphi,0,6.28319,nr,rmin,rmax,nz,0,z_rdo);
-  hm->registerHisto(hChargePlane);
-  hCharge_v1=new TH3D("sphenix_minbias_charge_v1","SC (ions) per m^3;phi (rad);r (m);z (m)",nphi,0,6.28319,nr,rmin,rmax,nz,0,z_rdo);
-  hm->registerHisto(hCharge_v1);
-  hCharge_RPhi=new TH2D("sphenix_minbias_charge_RPhi","SC (ions) per m^3;phi (rad);r (m)",nphi,0,6.28319,nr,rmin,rmax);
-  hm->registerHisto(hCharge_RPhi);
+  //hCharge=new TH3D("sphenix_minbias_charge","SC (ions) ;phi (rad);r (m);z (m)",nphi,0,6.28319,nr,rmin,rmax,nz,0,z_rdo);
+  //hm->registerHisto(hCharge);
+  //hChargePlane=new TH3D("sphenix_minbias_charge_plane","SC (ions) ;phi (rad);r (m);z (m)",nphi,0,6.28319,nr,rmin,rmax,nz,0,z_rdo);
+  //hm->registerHisto(hChargePlane);
+  //hCharge_v1=new TH3D("sphenix_minbias_charge_v1","SC (ions) ;phi (rad);r (m);z (m)",nphi,0,6.28319,nr,rmin,rmax,nz,0,z_rdo);
+  //hm->registerHisto(hCharge_v1);
+  //hCharge_RPhi=new TH2D("sphenix_minbias_charge_RPhi","SC (ions) ;phi (rad);r (m)",nphi,0,6.28319,nr,rmin,rmax);
+  //hm->registerHisto(hCharge_RPhi);
   //TH1 *h1 = new TH1F("edep1GeV", "edep 0-1GeV", 1000, 0, 1);
   //eloss.push_back(h1);
   //h1 = new TH1F("edep100GeV", "edep 0-100GeV", 1000, 0, 100);
@@ -220,8 +220,8 @@ int CalculateDistortions::process_event(PHCompositeNode *topNode)
     PHG4HitContainer::ConstRange hit_range = hits->getHits();
    //for ( const auto &event_timestamp : _timestamps ) {
       
-      float t0 = _event_timestamp;//(beamxing/xingRate); 
-      float driftedZ=t0*vIon;//drift position in local units
+      //float t0 = _event_timestamp;//(beamxing/xingRate); 
+      //float driftedZ=t0*vIon;//drift position in local units
 
       //double esum = 0;
       for (PHG4HitContainer::ConstIterator hit_iter = hit_range.first; hit_iter != hit_range.second; hit_iter++){
@@ -241,7 +241,7 @@ int CalculateDistortions::process_event(PHCompositeNode *topNode)
         float y = (hit_y0 + f * (hit_y1 - hit_y0))*cm;
         float z = (hit_z0 + f * (hit_z1 - hit_z0))*cm;
         
-        if (z<0) continue;
+        //if (z<0) continue;
         float r=sqrt(x*x+y*y);
         float phi=atan2(x,y);
         if (phi<0) phi+=2*pi;
@@ -257,21 +257,21 @@ int CalculateDistortions::process_event(PHCompositeNode *topNode)
         float ionsPerEle=w_gain*_ampGain*w_ibf*_ampIBFfrac;
 
 
-        float zprim=z-driftedZ;
-        float zibf=z_rdo-driftedZ;
+        //float zprim=z-driftedZ;
+        //float zibf=z_rdo-driftedZ;
         //zprim=1;
         //cout<<_freqKhz<<" "<<r<<phi<<zprim<<zibf;
-        int bin=hCharge->GetYaxis()->FindBin(r);
-        float hr=hCharge->GetYaxis()->GetBinLowEdge(bin);
-        float vol=(hzstep*hphistep*(hr+hrstep*0.5)*hrstep);
+        //int bin=hCharge->GetYaxis()->FindBin(r);
+        //float hr=hCharge->GetYaxis()->GetBinLowEdge(bin);
+        //float vol=(hzstep*hphistep*(hr+hrstep*0.5)*hrstep);
 
-        hCharge->Fill(phi,r,zprim,N_electrons/vol); //primary ion, drifted by t0, in cm
-        hCharge_RPhi->Fill(phi,r,N_electrons/vol); //primary ion, drifted by t0, in cm
+        //hCharge->Fill(phi,r,zprim,N_electrons/vol); //primary ion, drifted by t0, in cm
+        //hCharge_RPhi->Fill(phi,r,N_electrons/vol); //primary ion, drifted by t0, in cm
         _isOnPlane = 0;
         if(!IsOverFrame(r/mm,phi)){
-          hCharge->Fill(phi,r,zibf,N_electrons*ionsPerEle/vol); //amp ion, drifted by t0, in cm
-          hCharge_RPhi->Fill(phi,r,N_electrons*ionsPerEle/vol); ///amp ion, drifted by t0, in cm
-          hChargePlane->Fill(phi,r,zprim,w_gain*_ampGain/vol);
+          //hCharge->Fill(phi,r,zibf,N_electrons*ionsPerEle/vol); //amp ion, drifted by t0, in cm
+          //hCharge_RPhi->Fill(phi,r,N_electrons*ionsPerEle/vol); ///amp ion, drifted by t0, in cm
+          //hChargePlane->Fill(phi,r,zprim,w_gain*_ampGain/vol);
           //if (saveTree){
           _isOnPlane = 1;
           //}
@@ -313,16 +313,16 @@ int CalculateDistortions::EndRun(const int runnumber)
 int CalculateDistortions::End(PHCompositeNode *topNode)
 {
   //_rawHits->Draw("hit_r:hit_phi:hit_z >> hCharge_v1","(hit_eion)*(event_timestamp>0)");
-  int bX=7343773;
-  _rawHits->Draw(Form("hit_r:hit_phi:hit_z-(%d-event_bunchXing)*106*%.10f>> hCharge_v1",bX,vIon/(m/ns)),Form("(hit_eion*%f)*(event_bunchXing<%d)",Tpc_ElectronsPerGeV,bX)); //A map for event right after bunch xing bX has occurred	
-  _rawHits->Draw(Form("hit_r:hit_phi:1.05-(%d-event_bunchXing)*106*%.10f>>+hCharge_v1",bX,vIon/(m/ns)),Form("(ibf_vol)*(event_bunchXing<%d && isOnPlane)",bX)); //A map of IBF for event right after bunch xing B has occurred
+  //int bX=7343773;//Ne CF4 90:10
+  //_rawHits->Draw(Form("hit_r:hit_phi:hit_z-(%d-event_bunchXing)*106*%.10f>> hCharge_v1",bX,vIon/(m/ns)),Form("(hit_eion*%f)*(event_bunchXing<%d)",Tpc_ElectronsPerGeV,bX)); //A map for event right after bunch xing bX has occurred	
+  //_rawHits->Draw(Form("hit_r:hit_phi:1.05-(%d-event_bunchXing)*106*%.10f>>+hCharge_v1",bX,vIon/(m/ns)),Form("(ibf_vol)*(event_bunchXing<%d && isOnPlane)",bX)); //A map of IBF for event right after bunch xing B has occurred
 
   outfile->cd();
   //ntup->Write();
   outfile->Write();
   outfile->Close();
   delete outfile;
-  hm->dumpHistos(_filename, "UPDATE");
+  //hm->dumpHistos(_filename, "UPDATE");
   //cout << "CalculateDistortions::End(PHCompositeNode *topNode) This is the End..." << endl;
   //return Fun4AllReturnCodes::EVENT_OK;
   return 0;

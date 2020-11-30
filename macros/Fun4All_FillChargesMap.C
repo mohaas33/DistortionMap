@@ -37,7 +37,8 @@ void Fun4All_FillChargesMap(  const int nEvents = 10, const int eventsInFileStar
   dist_calc->SetFrequency(50);
   dist_calc->SetBeamXing(eventsInFileStart);
   dist_calc->SetUseIBFMap();
-  dist_calc->SetGain(2e3);
+  //dist_calc->SetGain(2e3*48.7/71.5);
+  dist_calc->SetGain(1400);
   dist_calc->SetIBF(0.004);
 
   se->registerSubsystem(dist_calc);

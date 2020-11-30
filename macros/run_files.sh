@@ -10,7 +10,7 @@ do
     let Xstart=f*1000 Xend=(f+1)*1000;
     A=$( printf '%06d' $Xstart )
     B=$( printf '%06d' $Xend )
-    fname="/sphenix/sim/sim01/sphnxpro/Micromegas/2/G4Hits_sHijing_0-12fm_"$A"_"$B".root" ;
+    fname="/sphenix/sim/sim01/sphnxpro/Micromegas/3/G4Hits_sHijing_0-12fm_"$A"_"$B".root" ;
     foutputname="/sphenix/user/shulga/Work/IBF/DistortionMap/Files/slim_G4Hits_sHijing_0-12fm_"$A"_"$B".root" ;
     echo $fname ;
     echo $foutputname ;

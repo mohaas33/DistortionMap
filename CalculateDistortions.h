@@ -80,10 +80,10 @@ class CalculateDistortions : public SubsysReco
    std::map<int,int> _timestamps;
    std::vector<int> _keys;
    TFile *outfile;
-   TH3 *hCharge;
-   TH3 *hChargePlane;
-   TH3 *hCharge_v1;
-   TH2 *hCharge_RPhi;
+   //TH3 *hCharge;
+   //TH3 *hChargePlane;
+   //TH3 *hCharge_v1;
+   //TH2 *hCharge_RPhi;
    float _ampGain;
    float _ampIBFfrac;
 
@@ -112,7 +112,8 @@ class CalculateDistortions : public SubsysReco
    //used two ways:  1) to apply units to variables when defined
    //                2) to divide by certain units so that those variables are expressed in those units.
 
-   float ionMobility=3.37*cm*cm/V/s;
+   //float ionMobility=3.37*cm*cm/V/s;
+   float ionMobility=1.65*cm*cm/V/s;
    float vIon=ionMobility*400*V/cm;
    //float vIon=16.0*um/us;
    float mbRate=_freqKhz*kHz;
@@ -126,14 +127,17 @@ class CalculateDistortions : public SubsysReco
    double CF4_dEdx = 7.00/cm;  // keV/cm
    double Ne_NTotal = 43/cm;    // Number/cm
    double CF4_NTotal = 100/cm;  // Number/cm
-   double Tpc_NTot = 0.90 * Ne_NTotal + 0.10 * CF4_NTotal;
-   double Tpc_dEdx = 0.90 * Ne_dEdx + 0.10 * CF4_dEdx;
+   //double Tpc_NTot = 0.90 * Ne_NTotal + 0.10 * CF4_NTotal;
+   //double Tpc_dEdx = 0.90 * Ne_dEdx + 0.10 * CF4_dEdx;
+   double Tpc_NTot = 0.50 * Ne_NTotal + 0.50 * CF4_NTotal;
+   double Tpc_dEdx = 0.50 * Ne_dEdx   + 0.50 * CF4_dEdx;
+
    double Tpc_ElectronsPerKeV = Tpc_NTot / Tpc_dEdx;
    double Tpc_ElectronsPerGeV = Tpc_NTot / Tpc_dEdx*1e6; //electrons per gev.
 
-   int nr=159;
-   int nphi=360;
-   int nz=62*2;
+  int nr=159;
+  int nphi=360;
+  int nz=62*2;
   
   double hrstep=(rmax-rmin)/nr;
   double hphistep=2*pi/nphi;

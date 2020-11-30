@@ -38,11 +38,12 @@ std::vector<int> readBeamXings(){
 }
 
 
-void run_analysis(int bXbias = 10, const int startFiles = 0,const int nFiles = 5){
+void run_analysis(int bXbias = 10, const int startFiles = 0,const int nFiles = 10){
     char fname[250];
 
     const int nHist = 10;
-    int bX = 734587;
+    //int bX = 734587;//Ne CF4 90 10
+    int bX = 1508071;//Ne CF4 50 50
     //int bXbias = 10;//0;
     //analyzeHits aH[nFiles];
     std::vector<int> bXs = readBeamXings();
@@ -67,6 +68,7 @@ void run_analysis(int bXbias = 10, const int startFiles = 0,const int nFiles = 5
         //cout<<"Loop"<<endl;
         aH.Loop();
     }
+    /*
     for (int i=0;i<nFiles;i++){       
         int eventsInFileStart = i*1000;
         int eventsInFileEnd = (i+1)*1000;
@@ -86,39 +88,13 @@ void run_analysis(int bXbias = 10, const int startFiles = 0,const int nFiles = 5
         }
 
     }
-
-//TCanvas *c = new TCanvas();   
-//hCharge_tot[0]->Draw();
-//c->Print("./charges.png");
-//   
-//TCanvas *c_xy = new TCanvas();
-//c_xy->GetPad(0)->SetLogz();
-//c_xy->SetRightMargin(0.15);
-//hCharge_tot[0]->Project3D("xy")->Draw("colz");
-//c_xy->Print("./charges_xy.png");
-//   
-//TCanvas *c_z = new TCanvas();
-//hCharge_tot[0]->SetLineColor(1);
-//hCharge_tot[1]->SetLineColor(2);
-//hCharge_tot[2]->SetLineColor(4);
-//hCharge_tot[3]->SetLineColor(6);
-//hCharge_tot[0]->SetLineWidth(2);
-//hCharge_tot[1]->SetLineWidth(2);
-//hCharge_tot[2]->SetLineWidth(2);
-//hCharge_tot[3]->SetLineWidth(2);
-//
-//hCharge_tot[0]->Project3D("z")->Draw("HIST");
-//hCharge_tot[1]->Project3D("z")->Draw("HISTsame");
-//hCharge_tot[2]->Project3D("z")->Draw("HISTsame");
-//hCharge_tot[3]->Project3D("z")->Draw("HISTsame");
-//c_z->Print("./charges_z.png");
-
-TFile outputFile (Form("/sphenix/user/shulga/Work/IBF/DistortionMap/Files/mapFile_bX%d_bias%d.root",bX,bXbias),"RECREATE");
-for (int hi=0;hi<nHist;hi++){       
-    hCharge_tot[hi]->Write();
-}
-outputFile.Close();
-
+    
+    TFile outputFile (Form("/sphenix/user/shulga/Work/IBF/DistortionMap/Files/mapFile_bX%d_bias%d.root",bX,bXbias),"RECREATE");
+    for (int hi=0;hi<nHist;hi++){       
+     hCharge_tot[hi]->Write();
+    }
+    outputFile.Close();
+    */
 
 
 }
