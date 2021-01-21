@@ -50,7 +50,7 @@ generate_files.py
 #Make TH3D maps:
 generate_map_files.py
 ```
-- Scripts above will also generate bash files to submit all jobs, __all bash scripts created aboveshould be provided executable rights before that__:
+- Scripts above will also generate bash files to submit all jobs, __all bash scripts created above should be provided executable rights before that__:
 ```
 ../run_all_jobs.sh  
 ../run_all_map_jobs.sh
