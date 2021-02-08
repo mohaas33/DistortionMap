@@ -68,24 +68,20 @@ class CalculateDistortions : public SubsysReco
   void SetUseIBFMap(bool useIBFMap = true);
   void SetGain(float ampGain=2e3);
   void SetIBF(float ampIBFfrac=0.004);
+  void SetCollSyst(int coll_syst=0);
 
-   double pi = 2 * acos(0.0);
+  double pi = 2 * acos(0.0);
 
  protected:
    Fun4AllHistoManager *hm;
-   //std::vector<TH1 *> eloss;
    std::string _filename;
    std::set<std::string> _node_postfix;
-   //   std::map<std::string, int> _detid;
    std::map<int,int> _timestamps;
    std::vector<int> _keys;
    TFile *outfile;
-   //TH3 *hCharge;
-   //TH3 *hChargePlane;
-   //TH3 *hCharge_v1;
-   //TH2 *hCharge_RPhi;
    float _ampGain;
    float _ampIBFfrac;
+   int _collSyst;
 
  private:
    double _freqKhz = 22;

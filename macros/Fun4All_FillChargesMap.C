@@ -40,6 +40,8 @@ void Fun4All_FillChargesMap(  const int nEvents = 10, const int eventsInFileStar
   //dist_calc->SetGain(2e3*48.7/71.5);
   dist_calc->SetGain(1400);
   dist_calc->SetIBF(0.004);
+  //Set pp colliding system
+  dist_calc->SetCollSyst(1) //setting pp with = 1
 
   se->registerSubsystem(dist_calc);
   

@@ -24,8 +24,9 @@ make install
 ... (to be updated)
 
 
-Workflow:
-- Files with G4Hits from 100'000 Hijing events: __/sphenix/sim/sim01/sphnxpro/Micromegas/2/G4Hits_sHijing_0-12fm_*__
+# Analysis workflow:
+- Files with G4Hits from 100'000 Hijing events used for the analysis: 
+    - __/sphenix/sim/sim01/sphnxpro/Micromegas/3/G4Hits_sHijing_0-12fm_*__
 
 - File with  bunchcrossing id and time (ns) assuming 106ns between bunches and 50kHz collision rate: __timestamps_50kHz.txt__. The file is used to mimic the bunchcrossing;
 
