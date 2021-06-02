@@ -30,29 +30,24 @@ make install
 
 - File with  bunchcrossing id and time (ns) assuming 106ns between bunches and 50kHz collision rate: __timestamps_50kHz.txt__. The file is used to mimic the bunchcrossing;
 
-- Running over G4Hits containers in the files is performed with Fun4All environment. Main code is Fun4All_FillChargesMap.C, it is run with run_files.sh, which takes as an input the first and last file number:
+- Running over G4Hits containers in the files is performed with Fun4All environment. Main code is Fun4All_FillChargesMap_300evts*.C, it is run with run_files.sh, which takes as an input the first and last file number:
 ```
 #This will run first 5 files with G4Hits and create 5 files 
-#with TTree in Files directory:
+#with histograms:
 source macros/run_files.sh 0 5 
 ```
 
--  As soon as files are available the histogram is filled with:
-```
-#This will run over hits and fill 10 TH3D space charge density distributions 
-#for 10 events after 50-th event appeared in the TPC after it is fully filled 
-#with ions, currently after 734587 bunchcrossing:
-root -l -b -q macros/run_analysis.C(50)   
-```
-- To create bunch of bash files and condor job files to start condor jobs 2 scripts are available:
+-  As soon as files are available the histograms are inside;
+- To create bunch of bash files and condor job files to start condor jobs scripts are available:
 ```
 #Run through G4Hits:
-generate_files.py
-#Make TH3D maps:
-generate_map_files.py
+scripts/generate_run_files_300evts_pp.py
+scripts/generate_run_files_300evts_AA.py
+scripts/generate_run_files_avg_pp.py
+scripts/generate_run_files_avg_AA.py
 ```
 - Scripts above will also generate bash files to submit all jobs, __all bash scripts created above should be provided executable rights before that__:
 ```
-../run_all_jobs.sh  
-../run_all_map_jobs.sh
+../run_all_jobs*  
+
 ```
