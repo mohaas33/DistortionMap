@@ -22,7 +22,7 @@ introduction = [
     "# Jobs by default get 1.4Gb of RAM allocated, ask for more if needed",
     "# but if a job needs more than 2Gb it will not be able to run on the",
     "# older nodes",
-    "#request_memory = 4.1GB",
+    "request_memory = 4.1GB",
     "",
     "# If you need multiple cores you can ask for them, but the scheduling",
     "# may take longer the \"larger\" a job you ask for",
@@ -55,14 +55,14 @@ introduction = [
 ff= open("./run_all_map_prim_jobs.sh","w+")
 ff.write("#!/usr/bin/bash"+"\n")
 
-for i in range(0,20):
+for i in range(0,100):
     filename = "./macros/run_files_map_prim_{}.sh".format(i)
     f= open(filename,"w+")
     f.write("#!/usr/bin/bash"+"\n")
     f.write("source /opt/sphenix/core/bin/sphenix_setup.sh -n"+"\n")
     f.write("export MYINSTALL=/sphenix/user/shulga/tpc2019_install"+"\n")
     f.write("source /opt/sphenix/core/bin/setup_local.sh $MYINSTALL"+"\n")
-    f.write("root.exe -l -b -q macros/run_analysis_prim.C\({},{},5\)".format(i,i*5)+"\n")
+    f.write("root.exe -l -b -q macros/run_analysis_prim.C\({},{},1\)".format(i,i*1)+"\n")
     f.close
 
     filename_job = "./macros/condor_run_map_files_prim_{}.job".format(i)

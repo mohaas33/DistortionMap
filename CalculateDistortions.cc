@@ -87,6 +87,7 @@ CalculateDistortions::CalculateDistortions(const std::string &name, const std::s
  , outfile(nullptr)
  ,_ampGain(2e3)
  ,_ampIBFfrac(0.02)
+ ,_collSyst(0)
 
 {
   cout << "CalculateDistortions::CalculateDistortions(const std::string &name) Calling ctor" << endl;
@@ -103,8 +104,24 @@ CalculateDistortions::~CalculateDistortions()
 //____________________________________________________________________________..
 int CalculateDistortions::Init(PHCompositeNode *topNode)
 {
+  double cm=1e-2; //changed to make 'm' 1.0, for convenience.
+
+  int nr=159;
+  int nphi=360;
+  int nz=62*2;
+  double z_rdo=105.5*cm;
+  double rmin=20*cm;
+  double rmax=78*cm;
   //cout << "CalculateDistortions::Init(PHCompositeNode *topNode) Initializing" << endl;
   hm = new Fun4AllHistoManager("HITHIST");
+
+  _h_SC_prim = new TH3F("_h_SC_prim","_h_SC_prim;#phi, [rad];R, [m];Z, [m]"  ,nphi,0,6.28319,nr,rmin,rmax,2*nz,-z_rdo,z_rdo);
+  _h_SC_ibf  = new TH3F("_h_SC_ibf" ,"_h_SC_ibf;#phi, [rad];R, [m];Z, [m]"   ,nphi,0,6.28319,nr,rmin,rmax,2*nz,-z_rdo,z_rdo);
+  _h_hits  = new TH1F("_h_hits" ,"_h_hits;N, [hit]"   ,4000,0,1e6);
+  hm->registerHisto(_h_SC_prim);
+  hm->registerHisto(_h_SC_ibf );
+  hm->registerHisto(_h_hits );
+
   outfile = new TFile(_filename.c_str(), "RECREATE");
   _event_timestamp = 0;
   _hit_eion  = 0;
@@ -113,18 +130,19 @@ int CalculateDistortions::Init(PHCompositeNode *topNode)
   _hit_z = 0;
   _ibf_vol     = 0;
   _amp_ele_vol = 0;
-  _rawHits=new TTree("hTree","tpc hit tree for ionization");
-  _rawHits->Branch("isOnPlane",&_isOnPlane);
-  _rawHits->Branch("hit_z",&_hit_z);
-  _rawHits->Branch("hit_r",&_hit_r);
-  _rawHits->Branch("hit_phi",&_hit_phi);
-  _rawHits->Branch("hit_eion",&_hit_eion);
-  _rawHits->Branch("ibf_vol"    ,&_ibf_vol    );
-  _rawHits->Branch("amp_ele_vol",&_amp_ele_vol);
+  if(_fSliming==1){
+    _rawHits=new TTree("hTree","tpc hit tree for ionization");
+    _rawHits->Branch("isOnPlane",&_isOnPlane);
+    _rawHits->Branch("hit_z",&_hit_z);
+    _rawHits->Branch("hit_r",&_hit_r);
+    _rawHits->Branch("hit_phi",&_hit_phi);
+    _rawHits->Branch("hit_eion",&_hit_eion);
+    _rawHits->Branch("ibf_vol"    ,&_ibf_vol    );
+    _rawHits->Branch("amp_ele_vol",&_amp_ele_vol);
 
-  _rawHits->Branch("event_timestamp",&_event_timestamp);
-  _rawHits->Branch("event_bunchXing",&_event_bunchXing);
-
+    _rawHits->Branch("event_timestamp",&_event_timestamp);
+    _rawHits->Branch("event_bunchXing",&_event_bunchXing);
+  }
   return 0;
 }
 
@@ -139,6 +157,7 @@ int CalculateDistortions::InitRun(PHCompositeNode *topNode)
   if(_collSyst==1){
     //pp collisions timestamps
     txt_file = "/phenix/u/hpereira/sphenix/work/g4simulations/timestamps_3MHz.txt";
+    //txt_file = "/sphenix/user/shulga/Work/IBF/DistortionMap/timestamps_50kHz.txt";
     start_line = 2;
   }
   ifstream InputFile (txt_file);
@@ -155,6 +174,9 @@ int CalculateDistortions::InitRun(PHCompositeNode *topNode)
             i++;    
         }
         _timestamps[n[0]]=n[1];
+        if(n_line<10){
+          cout<<n[1]<<endl;
+        }
         _keys.push_back(int(n[0]));
       }
     }
@@ -181,22 +203,33 @@ int CalculateDistortions::InitRun(PHCompositeNode *topNode)
 //____________________________________________________________________________..
 int CalculateDistortions::process_event(PHCompositeNode *topNode)
 {
+    
+  double bX = _beamxing;
+  double z_bias_avg = 0;
+  if (_fAvg==1){ 
+    z_bias_avg=1.05*(float) rand()/RAND_MAX;
+  }
   int bemxingsInFile = _keys.size();
-  if (_beamxing>= bemxingsInFile) _beamxing=0;
-  int key = _keys.at(_beamxing);
+  if (_evtstart>= bemxingsInFile) _evtstart=0;
+  int key = _keys.at(_evtstart);
   _event_timestamp = (float)_timestamps[key]*ns;//units in seconds
   _event_bunchXing = key;
-  if(_beamxing%100==0) cout<<"_beamxing = "<<_beamxing<<endl;
-  _beamxing++;
+  if(_evtstart%100==0) cout<<"_evtstart = "<<_evtstart<<endl;
+  _evtstart++;
 
   ostringstream nodename;
   set<std::string>::const_iterator iter;
   nodename << "G4HIT_TPC";
 
   PHG4HitContainer *hits = findNode::getClass<PHG4HitContainer>(topNode, nodename.str().c_str());
+  int n_hits = 0;
   if (hits){
     PHG4HitContainer::ConstRange hit_range = hits->getHits();
       for (PHG4HitContainer::ConstIterator hit_iter = hit_range.first; hit_iter != hit_range.second; hit_iter++){
+        n_hits++;
+        int f_fill_prim=1;
+        int f_fill_ibf=1;
+
         float hit_x0 = hit_iter->second->get_x(0);
         float hit_y0 = hit_iter->second->get_y(0);
         float hit_z0 = hit_iter->second->get_z(0);
@@ -213,6 +246,7 @@ int CalculateDistortions::process_event(PHCompositeNode *topNode)
         float r=sqrt(x*x+y*y);
         float phi=atan2(x,y);
         if (phi<0) phi+=2*pi;
+
         //Reading IBF and Gain weights according to X-Y position
         float w_ibf = 1.;
         float w_gain = 1.;
@@ -234,10 +268,51 @@ int CalculateDistortions::process_event(PHCompositeNode *topNode)
         _hit_eion = hit_eion;
         _ibf_vol = N_electrons*ionsPerEle;
         _amp_ele_vol = w_gain*_ampGain;
-  	    _rawHits->Fill();
+  	    if(_fSliming==1)_rawHits->Fill();
+        double z_prim = -1*1e10;
+        double z_ibf =  -1*1e10;
+
+        if(_hit_z>=0){
+          if(_fAvg==1){
+             z_prim = _hit_z - z_bias_avg;
+             z_ibf  = 1.05  - z_bias_avg;
+          }else{
+            z_prim = _hit_z-(bX-_event_bunchXing)*106*vIon*ns;
+            z_ibf = 1.05-(bX-_event_bunchXing)*106*vIon*ns;
+          }
+          if(z_prim<=0 ){
+            f_fill_prim=0;
+          }
+          if( z_ibf<=0){
+            f_fill_ibf=0;
+          }
+        }
+        if(_hit_z<0){
+           if(_fAvg==1){
+              z_prim = _hit_z + z_bias_avg;
+              z_ibf  = -1.05  + z_bias_avg;
+           }else{
+             z_prim = _hit_z+(bX-_event_bunchXing)*106*vIon*ns;
+             z_ibf = -1.05+(bX-_event_bunchXing)*106*vIon*ns;
+           }
+           if(z_prim>=0 ){
+             f_fill_prim=0;
+           }
+           if( z_ibf>=0){
+             f_fill_ibf=0;
+           }
+        }
+        //if(n_hits<5)cout<<"z_bias_avg="<<z_bias_avg<<" IBF ="<<z_ibf<<" prim ="<<z_prim<<endl;
+
+        double w_prim = _hit_eion*Tpc_ElectronsPerGeV;
+        if(f_fill_prim==1)_h_SC_prim ->Fill(_hit_phi,_hit_r,z_prim,w_prim);
+        if(_isOnPlane && f_fill_ibf==1)_h_SC_ibf  ->Fill(_hit_phi,_hit_r,z_ibf,_ibf_vol);
       }
 
+  }else{
+    if(_fSliming==1)_rawHits->Fill();
   }
+  _h_hits->Fill(n_hits);
   return 0;
 }
 
@@ -258,10 +333,19 @@ int CalculateDistortions::EndRun(const int runnumber)
 //____________________________________________________________________________..
 int CalculateDistortions::End(PHCompositeNode *topNode)
 {
-  outfile->cd();
-  outfile->Write();
-  outfile->Close();
-  delete outfile;
+  if(_fSliming==1){
+    outfile->cd();
+    outfile->Write();
+    outfile->Close();
+    delete outfile;
+    _h_SC_prim ->Sumw2( false );
+    _h_SC_ibf  ->Sumw2( false );
+    _h_hits    ->Sumw2( false );
+    hm->dumpHistos(_filename, "UPDATE");
+  }else{
+    hm->dumpHistos(_filename, "RECREATE");
+  }
+
   return 0;
 }
 
@@ -287,6 +371,11 @@ void CalculateDistortions::SetBeamXing(int newBeamXing){
   cout<<"Initial BeamXing is set to: "<<newBeamXing<<endl;
 
 }
+void CalculateDistortions::SetEvtStart(int newEvtStart){
+  _evtstart = newEvtStart;
+  cout<<"Starting event is set to: "<<newEvtStart<<endl;
+
+}
 
 void CalculateDistortions::SetUseIBFMap(bool useIBFMap){
   _fUseIBFMap = useIBFMap;
@@ -304,6 +393,19 @@ void CalculateDistortions::SetIBF(float ampIBFfrac){
 void CalculateDistortions::SetCollSyst(int coll_syst){
   _collSyst = coll_syst;
   std::string s_syst[2] = {"AA","pp"};
-  cout<<"Collision system is: "<<s_syst[_collSyst]<<endl;
+  cout<<"Collision system is set to: "<<s_syst[_collSyst]<<endl;
+
+}
+
+void CalculateDistortions::SetAvg(int fAvg){
+  _fAvg = fAvg;
+  std::string s_avg[2] = {"OFF","ON"};
+  cout<<"Averaging is set to: "<<s_avg[_fAvg]<<endl;
+
+}
+void CalculateDistortions::UseSliming(int fSliming){
+  _fSliming = fSliming;
+  std::string s_sliming[2] = {"OFF","ON"};
+  cout<<"Sliming is set to: "<<s_sliming[_fSliming]<<endl;
 
 }

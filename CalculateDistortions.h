@@ -65,10 +65,13 @@ class CalculateDistortions : public SubsysReco
 
   void SetFrequency(int freq);
   void SetBeamXing(int newBeamXing);
+  void SetEvtStart(int newEvtStart);
   void SetUseIBFMap(bool useIBFMap = true);
   void SetGain(float ampGain=2e3);
   void SetIBF(float ampIBFfrac=0.004);
   void SetCollSyst(int coll_syst=0);
+  void SetAvg(int fAvg=0);
+  void UseSliming(int fSliming=0);
 
   double pi = 2 * acos(0.0);
 
@@ -86,6 +89,9 @@ class CalculateDistortions : public SubsysReco
  private:
    double _freqKhz = 22;
    int _beamxing = 0;
+   int _evtstart = 0;
+   int _fAvg = 0;
+   int _fSliming = 0;
    TTree *_rawHits;
    int _isOnPlane;
    float _hit_z  ;
@@ -100,6 +106,12 @@ class CalculateDistortions : public SubsysReco
    bool _fUseIBFMap;
    TH2*   _h_modules_anode;
    TH2*   _h_modules_measuredibf;
+   TH1*   _h_hits;
+
+   TH3*   _h_SC_prim;
+   TH3*   _h_SC_ibf;
+
+
    float f=0.5;//for now, just pick the middle of the hit.  Do better later.
    float ns=1e-9,us=1e-6,ms=1e-3,s=1;
    float um=1e-6, mm=1e-3, cm=1e-2,m=1; //changed to make 'cm' 1.0, for convenience.

@@ -14,7 +14,7 @@ do
     foutputname="/sphenix/user/shulga/Work/IBF/DistortionMap/Files/slim_G4Hits_sHijing_0-12fm_"$A"_"$B".root" ;
     echo $fname ;
     echo $foutputname ;
-    root -l -b -q /sphenix/user/shulga/Work/IBF/DistortionMap/macros/Fun4All_FillChargesMap.C\(1000,$Xstart,\"$fname\",\"$foutputname\"\)
+    root -l -b -q /sphenix/user/shulga/Work/IBF/DistortionMap/macros/Fun4All_SlimG4Hits.C\(1000,$Xstart,\"$fname\",\"$foutputname\"\)
 done
 
 echo all done

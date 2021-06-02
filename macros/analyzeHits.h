@@ -51,6 +51,7 @@ public :
    int beamXingBias = 0;
    int f15kHz = 0;
    int fPrim = 0;
+   int fPP = 0;
    
    analyzeHits(TString FileName="/sphenix/user/shulga/Work/IBF/DistortionMap/Files/slim_G4Hits_sHijing_0-12fm_000000_001000.root",  TTree *_tree=0);
    virtual ~analyzeHits();
@@ -68,6 +69,7 @@ public :
    //virtual void     SetTree(TTree *tree);
    virtual void     RunLaser15kHz(int fkHz = 1);
    virtual void     RunPrim(int fprim = 1);
+   virtual void     RunPP(int fpp = 1);
 
 };
 
@@ -183,6 +185,9 @@ void analyzeHits::RunLaser15kHz(int fkHz){
 }
 void analyzeHits::RunPrim(int fprim = 1){
    fPrim = fprim;
+}
+void analyzeHits::RunPP(int fpp = 1){
+   fPP = fpp;
 }
 
 Int_t analyzeHits::Cut(Long64_t entry)

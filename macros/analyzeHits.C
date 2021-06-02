@@ -144,8 +144,8 @@ void analyzeHits::Loop()
 
   char fname[100];
   const int nHist = 10;
-   int NHistToRun=nHist;
-   if(fPrim==1)NHistToRun=1;
+  int NHistToRun=nHist;
+  if(fPrim==1)NHistToRun=1;
 
   TH3D *hCharge[nHist];
   TH3D *hIBFCharge[nHist];
@@ -170,13 +170,53 @@ void analyzeHits::Loop()
    //734352 bunches to fill the TPC
    //int bX=734587;//first one after which TPC has been filled according to timestamps_50kHz.txt 
    double bX = beamXing;
+
    std::vector<int>::iterator it = std::find(beamXings.begin(), beamXings.end(), bX);
+
    int index=0; 
-   if(fPrim!=1)index = std::distance(beamXings.begin(), it) + beamXingBias;
+
+   if(fPrim!=1 && fPP!=1)index = std::distance(beamXings.begin(), it) + beamXingBias;
    if(f15kHz==1)index = std::distance(beamXings.begin(), it);
+   //if(fPP==1){ 
+   //   index=0; 
+   //   for(std::vector<int>::iterator iti = beamXings.begin(); iti != beamXings.end(); ++iti) {
+   //      if (*iti<=bX + beamXingBias){
+   //        index++;
+   //      }else{
+   //         //std::cout<<*iti<<"  <="<<bX<<std::endl;
+   //         break;
+   //      } 
+   //   }
+   //}
    
+   //for (int i_p=0;i_p<10;i_p++){
+   //   int index_p = 0;
+   //   for(std::vector<int>::iterator iti = beamXings.begin(); iti != beamXings.end(); ++iti) {
+   //      if (*iti<=1508000*i_p){
+   //        index_p++;
+   //      }else{
+   //         std::cout<<i_p<<" "<<*iti<<"  <="<<1508000*i_p<<" ID="<<index_p<<std::endl;
+   //         break;
+   //      } 
+   //   }
+   //}
+   //0 1  <=0 ID=0
+   //1 1508006  <=1508000 ID=480728 49
+   //2 3016004  <=3016000 ID=959593 96
+   //3 4524003  <=4524000 ID=1438396 144
+   //4 6032005  <=6032000 ID=1917775 192
+   //5 7540010  <=7540000 ID=2396090 240
+   //6 9048004  <=9048000 ID=2875981 290
+   //7 10556001  <=10556000 ID=3355234 336
+   //8 12064007  <=12064000 ID=3834936 384
+   //9 13572002  <=13572000 ID=4313562 432
+   //float pp_tpc_fill[11]={0,480728,959593,1438396,1917775,2396090,2875981,3355234,3834936,4313562,6000000};
+   float pp_event_bunchXing = 0;
+   int index_prim = 0;
+
    int evtN=-1;
    double event_timestamp_tmp=0;
+   float z_bias_prim=0;
    if (fChain == 0) return;
 
    Long64_t nentries = fChain->GetEntriesFast();
@@ -190,15 +230,47 @@ void analyzeHits::Loop()
       // if (Cut(ientry) < 0) continue;
       //cout<<"index="<<index<<endl;
       //beamXings
+      if(fPrim==1 && event_timestamp_tmp!=event_timestamp){
+         if(index_prim == 0 ){
+            std::vector<int>::iterator it_prim = std::find(beamXings.begin(), beamXings.end(), event_bunchXing);
+            index_prim = std::distance(beamXings.begin(), it_prim) + beamXingBias;
+            //std::cout<<"ievtN="<<evtN <<std::endl;
+            //if(evtN==0)std::cout<<"id_prim="<<index_prim <<std::endl;
+         }else{
+            index_prim++;
+         }
+      }
       if (evtN==-1 || event_timestamp_tmp!=event_timestamp){
          evtN++;
          event_timestamp_tmp=event_timestamp;
+         z_bias_prim=1.05*(float) rand()/RAND_MAX;
+         //std::cout<<z_bias_prim<<std::endl;
       }
-   
+
+
+      //int index_pp = 0;
+      //if(fPP==1){
+      //   if(pp_event_bunchXing != event_bunchXing){
+      //      std::vector<int>::iterator it_pp = std::find(beamXings.begin(), beamXings.end(), event_bunchXing);
+      //      index_pp = std::distance(beamXings.begin(), it_pp);
+      //      pp_event_bunchXing = event_bunchXing;
+      //      for(int i_fill = 10; i_fill >= 0; i_fill--) {
+      //         if(index_pp<pp_tpc_fill[i_fill]) bX=beamXings[pp_tpc_fill[i_fill]];
+      //      }
+      //      //std::cout<<"bX="<<bX<<" event_bunchXing = "<<event_bunchXing <<std::endl;
+      //      //if(evtN==0)std::cout<<"id_prim="<<index_prim <<std::endl;
+      //   }
+      //}
+
       for(int hi=0;hi<NHistToRun;hi++){
          bX = beamXings.at(index+hi);
+         if(fPP==1)bX = beamXingBias;
+         long int bX_tmp=bX;
+         //std::cout<<"bX="<<bX_tmp <<std::endl;
          if(f15kHz==1)bX = beamXings.at(index)+double(hi+beamXingBias)*62830/2;//105.5/(1.65*400)/106 *1e9/24
-         if(fPrim==1)bX = 1508004-double(hi+beamXingBias+evtN)*1508004/1e5+event_bunchXing;//105.5/(1.65*400)/106 *1e9/24
+         if(fPrim==1){
+            bX = 1508004-double(hi+beamXingBias+evtN)*1508004/1e5+event_bunchXing;//105.5/(1.65*400)/106 *1e9/24
+         }
          double phi = hit_phi;
          double r = hit_r;
          double z_prim = -1*1e10;
@@ -208,6 +280,12 @@ void analyzeHits::Loop()
          if(hit_z>=0){
             z_prim = hit_z-(bX-event_bunchXing)*106*vIon*ns;
             z_ibf = 1.05-(bX-event_bunchXing)*106*vIon*ns;
+            if(fPrim==1){
+               z_prim = hit_z - z_bias_prim;
+               z_ibf  = 1.05  - z_bias_prim;
+               //std:cout<<"z_bias_prim="<<z_bias_prim<<" IBF ="<<z_ibf<<" prim ="<<z_prim<<std::endl;
+            }
+
             if(z_prim<=0 ){
                f_fill_prim=0;
             }
@@ -218,6 +296,10 @@ void analyzeHits::Loop()
          if(hit_z<0){
             z_prim = hit_z+(bX-event_bunchXing)*106*vIon*ns;
             z_ibf = -1.05+(bX-event_bunchXing)*106*vIon*ns;
+            if(fPrim==1){
+               z_prim = hit_z + z_bias_prim;
+               z_ibf  = -1.05  + z_bias_prim;
+            }
             if(z_prim>=0 ){
                f_fill_prim=0;
             }
@@ -238,7 +320,7 @@ void analyzeHits::Loop()
          double w_prim = hit_eion*Tpc_ElectronsPerGeV;
          double w_ibf = ibf_vol;
          double w_charge = amp_ele_vol*hit_eion*Tpc_ElectronsPerGeV;
-         if(event_bunchXing<bX){
+//         if(event_bunchXing<bX){
             if(fT==0 && f_fill_prim==1)hCharge[hi]->Fill(phi,r,z_prim,w_prim);
             if(isOnPlane){
                int rsec=0; // number of sector in r
@@ -268,7 +350,7 @@ void analyzeHits::Loop()
                }
                if(fT==1 && f_fill_ibf==1)hChargeT[hi]->Fill(phi,r,t_ibf,w_ibf);
             }
-         }
+//         }
       }
 
       
@@ -311,8 +393,13 @@ void analyzeHits::Loop()
 
    TFile e_outputFile (outputFileName_e ,"RECREATE");
    for(int hi=0;hi<NHistToRun;hi++){
-      if(fT==0)heCharge[hi]->Write();
+      if(fT==0){
+         heCharge[hi]->Sumw2( false );
+         heCharge[hi]->Write();
+      }
       if(fT==1){
+         heChargeT[hi]->Sumw2( false );
+         heChargeTPad[hi]->Sumw2( false );
          heChargeT[hi]->Write();
          heChargeTPad[hi]->Write();
       }

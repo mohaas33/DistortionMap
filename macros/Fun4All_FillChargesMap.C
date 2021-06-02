@@ -35,13 +35,16 @@ void Fun4All_FillChargesMap(  const int nEvents = 10, const int eventsInFileStar
   //cout<<fname_tmp<<endl;
   CalculateDistortions *dist_calc = new CalculateDistortions(cd_name, foutputname);
   dist_calc->SetFrequency(50);
-  dist_calc->SetBeamXing(eventsInFileStart);
+  dist_calc->SetEvtStart(eventsInFileStart);
+  dist_calc->SetBeamXing(1508071); // Set beam crosssing bias
+  dist_calc->SetAvg(1); //Set average calculation
   dist_calc->SetUseIBFMap();
   //dist_calc->SetGain(2e3*48.7/71.5);
   dist_calc->SetGain(1400);
   dist_calc->SetIBF(0.004);
+  dist_calc->UseSliming(0);//Turn off TTree filling and recording
   //Set pp colliding system
-  dist_calc->SetCollSyst(1) //setting pp with = 1
+  dist_calc->SetCollSyst(0); //setting pp with = 1
 
   se->registerSubsystem(dist_calc);
   
