@@ -104,23 +104,119 @@ CalculateDistortions::~CalculateDistortions()
 //____________________________________________________________________________..
 int CalculateDistortions::Init(PHCompositeNode *topNode)
 {
-  double cm=1e-2; //changed to make 'm' 1.0, for convenience.
+  //double cm=10; //changed to make 'm' 1.0, for convenience.
 
-  int nr=159;
-  int nphi=360;
-  int nz=62*2;
-  double z_rdo=105.5*cm;
-  double rmin=20*cm;
-  double rmax=78*cm;
+  //int nr=159;
+  int nz=72;
+  double z_rdo=108*cm;
+  //double rmin=20*cm;
+  //double rmax=78*cm;
   //cout << "CalculateDistortions::Init(PHCompositeNode *topNode) Initializing" << endl;
   hm = new Fun4AllHistoManager("HITHIST");
+  const int r_bins_N = 51;
+  double r_bins[r_bins_N+1] = {217.83,
+                              311.05,
+                              317.92,
+                              323.31,
+                              329.27,
+                              334.63,
+                              340.59,
+                              345.95,
+                              351.91,
+                              357.27,
+                              363.23,
+                              368.59,
+                              374.55,
+                              379.91,
+                              385.87,
+                              391.23,
+                              397.19,
+                              402.49,
+                              411.53,
+                              421.70,
+                              431.90,
+                              442.11,
+                              452.32,
+                              462.52,
+                              472.73,
+                              482.94,
+                              493.14,
+                              503.35,
+                              513.56,
+                              523.76,
+                              533.97,
+                              544.18,
+                              554.39,
+                              564.59,
+                              574.76,
+                              583.67,
+                              594.59,
+                              605.57,
+                              616.54,
+                              627.51,
+                              638.48,
+                              649.45,
+                              660.42,
+                              671.39,
+                              682.36,
+                              693.33,
+                              704.30,
+                              715.27,
+                              726.24,
+                              737.21,
+                              748.18,
+                              759.11};
+  const int nphi=205;
+  double phi_bins[nphi+1] = {0.,0.0068, 0.038675, 0.07055, 0.102425, 0.1343, 0.166175, 0.19805, 
+                            0.229925, 0.2618, 0.293675, 0.32555, 0.357425, 0.3893, 0.421175, 0.45305, 0.484925, 
+                            0.5168, 0.5304, 0.562275, 0.59415, 0.626025, 0.6579, 0.689775, 0.72165, 0.753525, 0.7854, 
+                            0.817275, 0.84915, 0.881025, 0.9129, 0.944775, 0.97665, 1.008525, 1.0404, 1.054, 1.085875, 
+                            1.11775, 1.149625, 1.1815, 1.213375, 1.24525, 1.277125, 1.309, 1.340875, 1.37275, 1.404625, 1.4365, 
+                            1.468375, 1.50025, 1.532125, 1.564, 1.5776, 1.609475, 1.64135, 1.673225, 1.7051, 1.736975, 1.76885, 
+                            1.800725, 1.8326, 1.864475, 1.89635, 1.928225, 1.9601, 1.991975, 2.02385, 2.055725, 2.0876, 2.1012, 
+                            2.133075, 2.16495, 2.196825, 2.2287, 2.260575, 2.29245, 2.324325, 2.3562, 2.388075, 2.41995, 2.451825, 
+                            2.4837, 2.515575, 2.54745, 2.579325, 2.6112, 2.6248, 2.656675, 2.68855, 2.720425, 2.7523, 2.784175, 2.81605, 
+                            2.847925, 2.8798, 2.911675, 2.94355, 2.975425, 3.0073, 3.039175, 3.07105, 3.102925, 3.1348, 3.1484, 3.180275, 
+                            3.21215, 3.244025, 3.2759, 3.307775, 3.33965, 3.371525, 3.4034, 3.435275, 3.46715, 3.499025, 3.5309, 3.562775, 
+                            3.59465, 3.626525, 3.6584, 3.672, 3.703875, 3.73575, 3.767625, 3.7995, 3.831375, 3.86325, 3.895125, 3.927, 3.958875, 
+                            3.99075, 4.022625, 4.0545, 4.086375, 4.11825, 4.150125, 4.182, 4.1956, 4.227475, 4.25935, 4.291225, 4.3231, 4.354975, 
+                            4.38685, 4.418725, 4.4506, 4.482475, 4.51435, 4.546225, 4.5781, 4.609975, 4.64185, 4.673725, 4.7056, 4.7192, 4.751075, 
+                            4.78295, 4.814825, 4.8467, 4.878575, 4.91045, 4.942325, 4.9742, 5.006075, 5.03795, 5.069825, 5.1017, 5.133575, 5.16545, 
+                            5.197325, 5.2292, 5.2428, 5.274675, 5.30655, 5.338425, 5.3703, 5.402175, 5.43405, 5.465925, 5.4978, 5.529675, 5.56155, 
+                            5.593425, 5.6253, 5.657175, 5.68905, 5.720925, 5.7528, 5.7664, 5.798275, 5.83015, 5.862025, 5.8939, 5.925775, 5.95765, 
+                            5.989525, 6.0214, 6.053275, 6.08515, 6.117025, 6.1489, 6.180775, 6.21265, 6.244525, 6.2764,2*pi};
 
-  _h_SC_prim = new TH3F("_h_SC_prim","_h_SC_prim;#phi, [rad];R, [m];Z, [m]"  ,nphi,0,6.28319,nr,rmin,rmax,2*nz,-z_rdo,z_rdo);
-  _h_SC_ibf  = new TH3F("_h_SC_ibf" ,"_h_SC_ibf;#phi, [rad];R, [m];Z, [m]"   ,nphi,0,6.28319,nr,rmin,rmax,2*nz,-z_rdo,z_rdo);
-  _h_hits  = new TH1F("_h_hits" ,"_h_hits;N, [hit]"   ,4000,0,1e6);
-  hm->registerHisto(_h_SC_prim);
-  hm->registerHisto(_h_SC_ibf );
+  
+  //double phi_bins[nphi+1];
+  //for (int p=0;p<=nphi;p++){
+  //  phi_bins[p]=6.28319/nphi*p;
+  //} 
+  double z_bins[2*nz+1];
+  for (int z=0;z<=2*nz;z++){
+    z_bins[z]=-z_rdo+z_rdo/nz*z;
+  } 
+
+  //_h_SC_prim = new TH3F("_h_SC_prim","_h_SC_prim;#phi, [rad];R, [m];Z, [m]"  ,nphi,0,6.28319,nr,rmin,rmax,2*nz,-z_rdo,z_rdo);
+  //_h_SC_ibf  = new TH3F("_h_SC_ibf" ,"_h_SC_ibf;#phi, [rad];R, [m];Z, [m]"   ,nphi,0,6.28319,nr,rmin,rmax,2*nz,-z_rdo,z_rdo);
+  _h_R  = new TH1F("_h_R" ,"_h_R;R, [m]"   ,r_bins_N ,r_bins);
+  _h_hits  = new TH1F("_h_hits" ,"_h_hits;N, [hit]"   ,1000,0,1e6);
+  _h_DC_E = new TH2F("_h_DC_E" ,"_h_DC_E;SC;E#times10^{6}"   ,2000,-100,2e5-100,1000,-50,1e3-50);
+  char name[100];
+  char name_ax[100];
+  for(int i=0;i<10;i++){ 
+    sprintf(name, "_h_SC_ibf_%d", i);
+    sprintf(name_ax, "_h_SC_ibf_%d;#phi, [rad];R, [m];Z, [m]", i);
+    _h_SC_ibf[i]  = new TH3F(name ,name_ax ,nphi,phi_bins,r_bins_N ,r_bins,2*nz,z_bins);
+    sprintf(name, "_h_SC_prim_%d", i);
+    sprintf(name_ax, "_h_SC_prim_%d;#phi, [rad];R, [m];Z, [m]", i);
+    _h_SC_prim[i] = new TH3F(name ,name_ax ,nphi,phi_bins,r_bins_N ,r_bins,2*nz,z_bins);
+
+    hm->registerHisto(_h_SC_prim[i]);
+    hm->registerHisto(_h_SC_ibf[i] );
+  }
   hm->registerHisto(_h_hits );
+  hm->registerHisto(_h_R );
+  hm->registerHisto(_h_DC_E );
 
   outfile = new TFile(_filename.c_str(), "RECREATE");
   _event_timestamp = 0;
@@ -203,14 +299,13 @@ int CalculateDistortions::InitRun(PHCompositeNode *topNode)
 //____________________________________________________________________________..
 int CalculateDistortions::process_event(PHCompositeNode *topNode)
 {
-    
-  double bX = _beamxing;
+  double bX = _beamxing[0];
   double z_bias_avg = 0;
   if (_fAvg==1){ 
-    z_bias_avg=1.05*(float) rand()/RAND_MAX;
+    z_bias_avg=1.055*m*(float) rand()/RAND_MAX;
   }
   int bemxingsInFile = _keys.size();
-  if (_evtstart>= bemxingsInFile) _evtstart=0;
+  if (_evtstart>= bemxingsInFile) _evtstart=_evtstart-bemxingsInFile;
   int key = _keys.at(_evtstart);
   _event_timestamp = (float)_timestamps[key]*ns;//units in seconds
   _event_bunchXing = key;
@@ -226,9 +321,8 @@ int CalculateDistortions::process_event(PHCompositeNode *topNode)
   if (hits){
     PHG4HitContainer::ConstRange hit_range = hits->getHits();
       for (PHG4HitContainer::ConstIterator hit_iter = hit_range.first; hit_iter != hit_range.second; hit_iter++){
-        n_hits++;
-        int f_fill_prim=1;
-        int f_fill_ibf=1;
+        int f_fill_prim[10]={0,0,0,0,0,0,0,0,0,0};
+        int f_fill_ibf[10]={0,0,0,0,0,0,0,0,0,0};
 
         float hit_x0 = hit_iter->second->get_x(0);
         float hit_y0 = hit_iter->second->get_y(0);
@@ -269,44 +363,65 @@ int CalculateDistortions::process_event(PHCompositeNode *topNode)
         _ibf_vol = N_electrons*ionsPerEle;
         _amp_ele_vol = w_gain*_ampGain;
   	    if(_fSliming==1)_rawHits->Fill();
-        double z_prim = -1*1e10;
-        double z_ibf =  -1*1e10;
+        double z_prim[10] = {-1*1e10,-1*1e10,-1*1e10,-1*1e10,-1*1e10,-1*1e10,-1*1e10,-1*1e10,-1*1e10,-1*1e10};
+        double z_ibf[10] =  {-1*1e10,-1*1e10,-1*1e10,-1*1e10,-1*1e10,-1*1e10,-1*1e10,-1*1e10,-1*1e10,-1*1e10};
 
-        if(_hit_z>=0){
-          if(_fAvg==1){
-             z_prim = _hit_z - z_bias_avg;
-             z_ibf  = 1.05  - z_bias_avg;
-          }else{
-            z_prim = _hit_z-(bX-_event_bunchXing)*106*vIon*ns;
-            z_ibf = 1.05-(bX-_event_bunchXing)*106*vIon*ns;
-          }
-          if(z_prim<=0 ){
-            f_fill_prim=0;
-          }
-          if( z_ibf<=0){
-            f_fill_ibf=0;
+        if(_hit_z>=0 && _hit_z<1.055*m){
+          n_hits++;
+          _h_DC_E->Fill(_ibf_vol,hit_eion*1e6);
+          for(int iz=0;iz<10;iz++){
+            bX = _beamxing[iz];
+            if(_fAvg==1){
+               z_prim[iz] = _hit_z - z_bias_avg;
+               z_ibf[iz]  = 1.055*m  - z_bias_avg;
+            }else{
+              z_prim[iz] = _hit_z-(bX-_event_bunchXing)*106*vIon*ns;
+              z_ibf[iz] = 1.055*m-(bX-_event_bunchXing)*106*vIon*ns;
+            }
+            if(z_prim[iz]>0 && z_prim[iz]<1.055*m){
+              f_fill_prim[iz]=1;
+            }
+            if( z_ibf[iz]>0 && z_ibf[iz]<1.055*m){
+              f_fill_ibf[iz]=1;
+            }
           }
         }
-        if(_hit_z<0){
-           if(_fAvg==1){
-              z_prim = _hit_z + z_bias_avg;
-              z_ibf  = -1.05  + z_bias_avg;
-           }else{
-             z_prim = _hit_z+(bX-_event_bunchXing)*106*vIon*ns;
-             z_ibf = -1.05+(bX-_event_bunchXing)*106*vIon*ns;
-           }
-           if(z_prim>=0 ){
-             f_fill_prim=0;
-           }
-           if( z_ibf>=0){
-             f_fill_ibf=0;
-           }
+        if(_hit_z<0 && _hit_z>-1.055*m){
+          n_hits++;
+          _h_DC_E->Fill(_ibf_vol,hit_eion*1e6);
+          for(int iz=0;iz<10;iz++){
+            bX = _beamxing[iz];
+            if(_fAvg==1){
+               z_prim[iz] = _hit_z + z_bias_avg;
+               z_ibf[iz]  = -1.055*m  + z_bias_avg;
+            }else{
+              z_prim[iz] = _hit_z+(bX-_event_bunchXing)*106*vIon*ns;
+              z_ibf[iz] = -1.055*m+(bX-_event_bunchXing)*106*vIon*ns;
+            }
+            if(z_prim[iz]<0 && z_prim[iz]>-1.055*m){
+              f_fill_prim[iz]=1;
+            }
+            if( z_ibf[iz]<0 && z_ibf[iz]>-1.055*m){
+              f_fill_ibf[iz]=1;
+            }
+          }
         }
         //if(n_hits<5)cout<<"z_bias_avg="<<z_bias_avg<<" IBF ="<<z_ibf<<" prim ="<<z_prim<<endl;
 
         double w_prim = _hit_eion*Tpc_ElectronsPerGeV;
-        if(f_fill_prim==1)_h_SC_prim ->Fill(_hit_phi,_hit_r,z_prim,w_prim);
-        if(_isOnPlane && f_fill_ibf==1)_h_SC_ibf  ->Fill(_hit_phi,_hit_r,z_ibf,_ibf_vol);
+        for(int iz=0;iz<10;iz++){
+          if(f_fill_prim[iz]==1){
+            _h_SC_prim[iz] ->Fill(_hit_phi,_hit_r,z_prim[iz],w_prim);
+          }
+          //if(/*_isOnPlane &&*/ f_fill_ibf[iz]==1){
+          if( f_fill_ibf[iz]==1){
+            _h_SC_ibf[iz] ->Fill(_hit_phi,_hit_r,z_ibf[iz],_ibf_vol);
+          }
+        }
+        if( f_fill_ibf[0]==1){
+          _h_R ->Fill(_hit_r);
+          
+        }
       }
 
   }else{
@@ -338,9 +453,14 @@ int CalculateDistortions::End(PHCompositeNode *topNode)
     outfile->Write();
     outfile->Close();
     delete outfile;
-    _h_SC_prim ->Sumw2( false );
-    _h_SC_ibf  ->Sumw2( false );
+    for(int i=0;i<10;i++){ 
+      _h_SC_prim[i] ->Sumw2( false );
+      _h_SC_ibf[i] ->Sumw2( false );
+    }
+
     _h_hits    ->Sumw2( false );
+    _h_DC_E     ->Sumw2( false );
+    _h_R     ->Sumw2( false );
     hm->dumpHistos(_filename, "UPDATE");
   }else{
     hm->dumpHistos(_filename, "RECREATE");
@@ -366,9 +486,10 @@ void CalculateDistortions::SetFrequency(int freq){
   _freqKhz = freq;
   cout<<"Frequency is set to: "<<_freqKhz<<" kHz"<<endl;
 }
-void CalculateDistortions::SetBeamXing(int newBeamXing){
-  _beamxing = newBeamXing;
-  cout<<"Initial BeamXing is set to: "<<newBeamXing<<endl;
+//void CalculateDistortions::SetBeamXing(int newBeamXing){
+void CalculateDistortions::SetBeamXing(std::vector<int> beamXs){
+  _beamxing = beamXs;
+  cout<<"Initial BeamXing is set to: "<<_beamxing[0]<<endl;
 
 }
 void CalculateDistortions::SetEvtStart(int newEvtStart){

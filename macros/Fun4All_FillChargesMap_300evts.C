@@ -15,6 +15,37 @@ R__LOAD_LIBRARY(libfun4all.so)
 R__LOAD_LIBRARY(libCalculateDistortions.so)
 R__LOAD_LIBRARY(libg4dst.so)
 
+std::vector<int> readBeamXings();
+
+std::vector<int> readBeamXings(){
+  //cout << "CalculateDistortions::InitRun(PHCompositeNode *topNode) Initializing for Run XXX" << endl;
+  std::vector<int> bXs;
+  string line;
+  string txt_file = "/sphenix/user/shulga/Work/IBF/DistortionMap/timestamps_50kHz.txt";
+  ifstream InputFile (txt_file);
+  //std::map<int,int> timestamps;
+  if (InputFile.is_open()){
+    int n_line=0;
+    while ( getline (InputFile,line) )
+    {
+        n_line++;
+      //cout << line << '\n';
+      if(n_line>3){
+        std::istringstream is( line );
+        double n[2] = {0,0};
+        int i = 0;
+        while( is >> n[i] ) {    
+            i++;    
+        }
+        //_timestamps[n[0]]=n[1];
+        bXs.push_back(int(n[0]));
+      }
+    }
+    InputFile.close();
+  }
+ return bXs;
+}
+
 void Fun4All_FillChargesMap_300evts(  const int nEvents = 10, const int eventsInFileStart = 0, const int eventsBeamCrossing = 1508071, const string &fname = "/sphenix/sim/sim01/sphnxpro/Micromegas/2/G4Hits_sHijing_0-12fm_000000_001000.root", const string &foutputname = "/sphenix/user/shulga/Work/IBF/DistortionMap/Files/slim_G4Hits_sHijing_0-12fm_000000_001000.root" )
 {
   ///////////////////////////////////////////
@@ -29,16 +60,28 @@ void Fun4All_FillChargesMap_300evts(  const int nEvents = 10, const int eventsIn
   //int eventsInFileEnd = (i+1)*1000;
   //sprintf(fname, "/sphenix/sim/sim01/sphnxpro/Micromegas/2/G4Hits_sHijing_0-12fm_%06d_%06d.root",eventsInFileStart,eventsInFileEnd);
   //sprintf(foutputname, "/sphenix/user/shulga/Work/IBF/DistortionMap/Files/slim_G4Hits_sHijing_0-12fm_%06d_%06d.root",eventsInFileStart,eventsInFileEnd);
+  std::vector<int> bXs = readBeamXings();
+  std::vector<int> bXs_sel;
+  std::vector<int>::iterator it = std::find(bXs.begin(), bXs.end(), eventsBeamCrossing);
+  int index=0; 
+  index = std::distance(bXs.begin(), it);
+  cout<<"Index="<<index<<endl;
+  for(int n=0;n<10;n++){
+    int bXN=index+n*1000;
+    bXs_sel.push_back(bXs[bXN]);
+    cout<<"bX="<<bXs[bXN]<<endl;
 
+  }
   Fun4AllServer *se = Fun4AllServer::instance();
   string cd_name = "CalculateDistortions"+std::to_string(eventsInFileStart);
   //cout<<fname_tmp<<endl;
   CalculateDistortions *dist_calc = new CalculateDistortions(cd_name, foutputname);
   dist_calc->SetFrequency(50);
   dist_calc->SetEvtStart(eventsInFileStart);
-  dist_calc->SetBeamXing(eventsBeamCrossing); // Set beam crosssing bias
+  //dist_calc->SetBeamXing(eventsBeamCrossing); // Set beam crosssing bias
+  dist_calc->SetBeamXing(bXs_sel);// Set beam crosssing bias
   //dist_calc->SetAvg(1); //Set average calculation
-  dist_calc->SetUseIBFMap();
+  dist_calc->SetUseIBFMap(false);
   //dist_calc->SetGain(2e3*48.7/71.5);
   dist_calc->SetGain(1400);
   dist_calc->SetIBF(0.004);
