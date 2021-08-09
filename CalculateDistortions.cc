@@ -176,8 +176,8 @@ int CalculateDistortions::Init(PHCompositeNode *topNode)
     _rawHits->Branch("ibf_vol"    ,&_ibf_vol    );
     _rawHits->Branch("amp_ele_vol",&_amp_ele_vol);
 
-    _rawHits->Branch("event_timestamp",&_event_timestamp[0]);
-    _rawHits->Branch("event_bunchXing",&_event_bunchXing[0]);
+    _rawHits->Branch("event_timestamp",&_event_timestamp);
+    _rawHits->Branch("event_bunchXing",&_event_bunchXing);
   }
   return 0;
 }
@@ -241,21 +241,17 @@ int CalculateDistortions::process_event(PHCompositeNode *topNode)
   double bX = 0;
   double z_bias_avg = 0;
   int bemxingsInFile = _keys.size();
-
+  int key = -1;
   if (_fAvg==1){ 
     z_bias_avg=1.055*m*(float) rand()/RAND_MAX;
   }
-  for(int iz=0;iz<10;iz++){
+  if (_evtstart>= bemxingsInFile) _evtstart=_evtstart-bemxingsInFile;
+  key = _keys.at(_evtstart);
+  _event_timestamp = (float)_timestamps[key]*ns;//units in seconds
+  _event_bunchXing = key;
 
-    bX = _beamxing[iz];
-
-    if (_evtstart>= bemxingsInFile) _evtstart=_evtstart-bemxingsInFile;
-    int key = _keys.at(_evtstart+iz*2000);
-    _event_timestamp[iz] = (float)_timestamps[key]*ns;//units in seconds
-    _event_bunchXing[iz] = key;
-    if(_evtstart%100==0) cout<<"_evtstart = "<<_evtstart<<endl;
-    _evtstart++;
-  }
+  if(_evtstart%100==0) cout<<"_evtstart = "<<_evtstart<<endl;
+  _evtstart++;
   ostringstream nodename;
   set<std::string>::const_iterator iter;
   nodename << "G4HIT_TPC";
@@ -319,8 +315,8 @@ int CalculateDistortions::process_event(PHCompositeNode *topNode)
                z_prim[iz] = _hit_z - z_bias_avg;
                z_ibf[iz]  = 1.055*m  - z_bias_avg;
             }else{
-              z_prim[iz] = _hit_z-(bX-_event_bunchXing[iz])*106*vIon*ns;
-              z_ibf[iz] = 1.055*m-(bX-_event_bunchXing[iz])*106*vIon*ns;
+              z_prim[iz] = _hit_z-(bX-_event_bunchXing)*106*vIon*ns;
+              z_ibf[iz] = 1.055*m-(bX-_event_bunchXing)*106*vIon*ns;
             }
             if(z_prim[iz]>0 && z_prim[iz]<1.055*m){
               f_fill_prim[iz]=1;
@@ -339,8 +335,8 @@ int CalculateDistortions::process_event(PHCompositeNode *topNode)
                z_prim[iz] = _hit_z + z_bias_avg;
                z_ibf[iz]  = -1.055*m  + z_bias_avg;
             }else{
-              z_prim[iz] = _hit_z+(bX-_event_bunchXing[iz])*106*vIon*ns;
-              z_ibf[iz] = -1.055*m+(bX-_event_bunchXing[iz])*106*vIon*ns;
+              z_prim[iz] = _hit_z+(bX-_event_bunchXing)*106*vIon*ns;
+              z_ibf[iz] = -1.055*m+(bX-_event_bunchXing)*106*vIon*ns;
             }
             if(z_prim[iz]<0 && z_prim[iz]>-1.055*m){
               f_fill_prim[iz]=1;

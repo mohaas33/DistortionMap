@@ -103,8 +103,8 @@ class CalculateDistortions : public SubsysReco
    float _hit_eion;
    float _ibf_vol;   
    float _amp_ele_vol;
-   float _event_timestamp[10];
-   float _event_bunchXing[10];
+   float _event_timestamp;
+   float _event_bunchXing;
    
    bool _fUseIBFMap;
    TH2*   _h_modules_anode;
