@@ -239,6 +239,7 @@ int CalculateDistortions::InitRun(PHCompositeNode *topNode)
 int CalculateDistortions::process_event(PHCompositeNode *topNode)
 {
   double bX = 0;
+  //double bX_end = 0;
   double z_bias_avg = 0;
   int bemxingsInFile = _keys.size();
   int key = -1;
@@ -304,45 +305,51 @@ int CalculateDistortions::process_event(PHCompositeNode *topNode)
         _amp_ele_vol = w_gain*_ampGain;
   	    if(_fSliming==1)_rawHits->Fill();
         double z_prim[10] = {-1*1e10,-1*1e10,-1*1e10,-1*1e10,-1*1e10,-1*1e10,-1*1e10,-1*1e10,-1*1e10,-1*1e10};
-        double z_ibf[10] =  {-1*1e10,-1*1e10,-1*1e10,-1*1e10,-1*1e10,-1*1e10,-1*1e10,-1*1e10,-1*1e10,-1*1e10};
+        double z_ibf[10] = {-1*1e10,-1*1e10,-1*1e10,-1*1e10,-1*1e10,-1*1e10,-1*1e10,-1*1e10,-1*1e10,-1*1e10};
 
-        if(_hit_z>=0 && _hit_z<1.055*m){
+        if(_hit_z>=5*mm && _hit_z<1.055*m){
           n_hits++;
           _h_DC_E->Fill(_ibf_vol,hit_eion*1e6);
           for(int iz=0;iz<10;iz++){
             bX = _beamxing[iz];
-            if(_fAvg==1){
-               z_prim[iz] = _hit_z - z_bias_avg;
-               z_ibf[iz]  = 1.055*m  - z_bias_avg;
-            }else{
-              z_prim[iz] = _hit_z-(bX-_event_bunchXing)*106*vIon*ns;
-              z_ibf[iz] = 1.055*m-(bX-_event_bunchXing)*106*vIon*ns;
-            }
-            if(z_prim[iz]>0 && z_prim[iz]<1.055*m){
-              f_fill_prim[iz]=1;
-            }
-            if( z_ibf[iz]>0 && z_ibf[iz]<1.055*m){
-              f_fill_ibf[iz]=1;
+            //bX_end = _beamxing_end[iz];
+            if(_event_bunchXing<=bX){
+              if(_fAvg==1){
+                 z_prim[iz] = _hit_z - z_bias_avg;
+                 z_ibf[iz]  = 1.055*m  - z_bias_avg;
+              }else{
+                z_prim[iz] = _hit_z-(bX-_event_bunchXing)*106*vIon*ns;
+                z_ibf[iz] = 1.055*m-(bX-_event_bunchXing)*106*vIon*ns;
+              }
+              if(z_prim[iz]>0 && z_prim[iz]<1.055*m){
+                f_fill_prim[iz]=1;
+              }
+              if( z_ibf[iz]>0 && z_ibf[iz]<1.055*m){
+                f_fill_ibf[iz]=1;
+              }
             }
           }
         }
-        if(_hit_z<0 && _hit_z>-1.055*m){
+        if(_hit_z<-5*mm && _hit_z>-1.055*m){
           n_hits++;
           _h_DC_E->Fill(_ibf_vol,hit_eion*1e6);
           for(int iz=0;iz<10;iz++){
             bX = _beamxing[iz];
-            if(_fAvg==1){
-               z_prim[iz] = _hit_z + z_bias_avg;
-               z_ibf[iz]  = -1.055*m  + z_bias_avg;
-            }else{
-              z_prim[iz] = _hit_z+(bX-_event_bunchXing)*106*vIon*ns;
-              z_ibf[iz] = -1.055*m+(bX-_event_bunchXing)*106*vIon*ns;
-            }
-            if(z_prim[iz]<0 && z_prim[iz]>-1.055*m){
-              f_fill_prim[iz]=1;
-            }
-            if( z_ibf[iz]<0 && z_ibf[iz]>-1.055*m){
-              f_fill_ibf[iz]=1;
+            //bX_end = _beamxing_end[iz];
+            if(_event_bunchXing<=bX){
+              if(_fAvg==1){
+                 z_prim[iz] = _hit_z + z_bias_avg;
+                 z_ibf[iz]  = -1.055*m  + z_bias_avg;
+              }else{
+                z_prim[iz] = _hit_z+(bX-_event_bunchXing)*106*vIon*ns;
+                z_ibf[iz] = -1.055*m+(bX-_event_bunchXing)*106*vIon*ns;
+              }
+              if(z_prim[iz]<0 && z_prim[iz]>-1.055*m){
+                f_fill_prim[iz]=1;
+              }
+              if( z_ibf[iz]<0 && z_ibf[iz]>-1.055*m){
+                f_fill_ibf[iz]=1;
+              }
             }
           }
         }
@@ -431,6 +438,11 @@ void CalculateDistortions::SetBeamXing(std::vector<int> beamXs){
   cout<<"Initial BeamXing is set to: "<<_beamxing[0]<<endl;
 
 }
+//void CalculateDistortions::SetBeamXingEnd(std::vector<int> beamXs_end){
+//  _beamxing_end = beamXs_end;
+//  cout<<"Last BeamXing to fill TPC is set to: "<<_beamxing_end[0]<<endl;
+//
+//}
 void CalculateDistortions::SetEvtStart(int newEvtStart){
   _evtstart = newEvtStart;
   cout<<"Starting event is set to: "<<newEvtStart<<endl;

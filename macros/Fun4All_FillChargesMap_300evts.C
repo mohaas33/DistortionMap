@@ -45,7 +45,12 @@ std::vector<int> readBeamXings(){
   }
  return bXs;
 }
+int closest(std::vector<int> const& vec, int value) {
+    auto const it = std::lower_bound(vec.begin(), vec.end(), value);
+    if (it == vec.end()) { return -1; }
 
+    return *it;
+}
 void Fun4All_FillChargesMap_300evts(  const int nEvents = 10, const int eventsInFileStart = 0, const int eventsBeamCrossing = 1508071, const string &fname = "/sphenix/sim/sim01/sphnxpro/Micromegas/2/G4Hits_sHijing_0-12fm_000000_001000.root", const string &foutputname = "/sphenix/user/shulga/Work/IBF/DistortionMap/Files/slim_G4Hits_sHijing_0-12fm_000000_001000.root" )
 {
   ///////////////////////////////////////////
@@ -62,6 +67,7 @@ void Fun4All_FillChargesMap_300evts(  const int nEvents = 10, const int eventsIn
   //sprintf(foutputname, "/sphenix/user/shulga/Work/IBF/DistortionMap/Files/slim_G4Hits_sHijing_0-12fm_%06d_%06d.root",eventsInFileStart,eventsInFileEnd);
   std::vector<int> bXs = readBeamXings();
   std::vector<int> bXs_sel;
+  //std::vector<int> bXs_sel_end;
   std::vector<int>::iterator it = std::find(bXs.begin(), bXs.end(), eventsBeamCrossing);
   int index=0; 
   index = std::distance(bXs.begin(), it);
@@ -69,8 +75,12 @@ void Fun4All_FillChargesMap_300evts(  const int nEvents = 10, const int eventsIn
   for(int n=0;n<10;n++){
     int bXN=index+n*1000;
     bXs_sel.push_back(bXs[bXN]);
+    //int n_bX = closest(bXs, bXs[bXN]);
+    //bXs_sel_end.push_back(n_bX); 
+    //int id_bX = std::distance(bXs.begin(), it);
+    //std::vector<int>::iterator it_bX = std::find(bXs.begin(), bXs.end(), n_bX);
     cout<<"bX="<<bXs[bXN]<<endl;
-
+    //cout<<"bX="<<bXs[bXN]<<"last event:"<<n_bX<<" evt:"<<std::distance(bXs.begin(), it_bX)<<endl;
   }
   Fun4AllServer *se = Fun4AllServer::instance();
   string cd_name = "CalculateDistortions"+std::to_string(eventsInFileStart);
@@ -80,6 +90,7 @@ void Fun4All_FillChargesMap_300evts(  const int nEvents = 10, const int eventsIn
   dist_calc->SetEvtStart(eventsInFileStart);
   //dist_calc->SetBeamXing(eventsBeamCrossing); // Set beam crosssing bias
   dist_calc->SetBeamXing(bXs_sel);// Set beam crosssing bias
+  //dist_calc->SetBeamXingEnd(bXs_sel_end);// Set last beam crosssing for the biases
   //dist_calc->SetAvg(1); //Set average calculation
   dist_calc->SetUseIBFMap(false);
   //dist_calc->SetGain(2e3*48.7/71.5);

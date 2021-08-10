@@ -66,6 +66,7 @@ class CalculateDistortions : public SubsysReco
   void SetFrequency(int freq);
   //void SetBeamXing(int newBeamXing);
   void SetBeamXing(std::vector<int> beamXs);
+  //void SetBeamXingEnd(std::vector<int> beamXs_end);
   void SetEvtStart(int newEvtStart);
   void SetUseIBFMap(bool useIBFMap = true);
   void SetGain(float ampGain=2e3);
@@ -91,6 +92,7 @@ class CalculateDistortions : public SubsysReco
    double _freqKhz = 22;
    //int _beamxing = 0;
    std::vector<int> _beamxing;
+   //std::vector<int> _beamxing_end;
 
    int _evtstart = 0;
    int _fAvg = 0;
