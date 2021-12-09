@@ -10,13 +10,15 @@ AM_LDFLAGS = \
   -L$(OFFLINE_MAIN)/lib
 
 pkginclude_HEADERS = \
-  CalculateDistortions.h
+  CalculateDistortions.h \
+  Shifter.h
 
 lib_LTLIBRARIES = \
   libCalculateDistortions.la
 
 libCalculateDistortions_la_SOURCES = \
-  CalculateDistortions.cc
+  CalculateDistortions.cc \
+  Shifter.cc
 
 libCalculateDistortions_la_LIBADD = \
   -lfun4all \

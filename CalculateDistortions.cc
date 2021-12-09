@@ -18,6 +18,7 @@
 #include <TH3.h>
 #include <TNtuple.h>
 #include <TTree.h>
+#include <TVector3.h>
 
 #include <iostream>
 #include <fstream>
@@ -26,8 +27,74 @@
 #include <typeinfo>
 #include <cstdlib>
 #include <map>
+#include <vector>
+
+#include "Shifter.h"
 
 using namespace std;
+
+
+
+
+vector<double> getNewWeights(TH3* _h_SC_ibf, TH2* _h_modules_anode, TH2* _h_modules_measuredibf, double _hit_r, double _hit_phi, double dr_bin, double dphi_bin, bool _fUseIBFMap);
+
+vector<double> getNewWeights(TH3* _h_SC_ibf, TH2* _h_modules_anode, TH2* _h_modules_measuredibf, double _hit_r, double _hit_phi, double dr_bin, double dphi_bin, bool _fUseIBFMap){
+  double w_ibf_tmp =1.0; 
+  double w_gain_tmp=1.0;
+  int r_bin = _h_SC_ibf ->GetYaxis()->FindBin(_hit_r);
+  double r_bin_c = _h_SC_ibf ->GetYaxis()->GetBinCenter(r_bin);
+
+  int phi_bin = _h_SC_ibf ->GetXaxis()->FindBin(_hit_phi);
+  double phi_bin_c = _h_SC_ibf ->GetXaxis()->GetBinCenter(phi_bin);
+
+  if(dr_bin>0 && dphi_bin<0){
+    if(_hit_r-r_bin_c>0){
+      _hit_r = _hit_r+dr_bin;
+    }else{
+      _hit_r = _hit_r-dr_bin;
+    }
+  }
+
+  if(dr_bin<0 && dphi_bin>0){
+    if(_hit_phi-phi_bin_c>0){
+      _hit_phi = _hit_phi+dphi_bin;
+    }else{
+      _hit_phi = _hit_phi-dphi_bin;
+    }
+  }
+  if(dr_bin>0 && dphi_bin>0){
+    if(_hit_phi-phi_bin_c>0 && _hit_r-r_bin_c>=0){
+      _hit_phi = _hit_phi+dphi_bin;
+      _hit_r = _hit_r+dr_bin;    
+    }
+    if(_hit_phi-phi_bin_c<=0 && _hit_r-r_bin_c<0){
+      _hit_phi = _hit_phi-dphi_bin;
+      _hit_r = _hit_r-dr_bin;    
+    }
+    if(_hit_phi-phi_bin_c>0 && _hit_r-r_bin_c<=0){
+      _hit_phi = _hit_phi+dphi_bin;
+      _hit_r = _hit_r-dr_bin;    
+    }
+    if(_hit_phi-phi_bin_c<=0 && _hit_r-r_bin_c>0){
+      _hit_phi = _hit_phi-dphi_bin;
+      _hit_r = _hit_r+dr_bin;    
+    }
+  }
+  if(_fUseIBFMap){
+    double x_tmp=_hit_r*cos(_hit_phi);
+    double y_tmp=_hit_r*sin(_hit_phi);
+    int bin_x = _h_modules_anode ->GetXaxis()->FindBin(x_tmp);
+    int bin_y = _h_modules_anode ->GetYaxis()->FindBin(y_tmp);
+    w_ibf_tmp = _h_modules_measuredibf->GetBinContent(bin_x,bin_y);
+    w_gain_tmp = _h_modules_anode->GetBinContent(bin_x,bin_y);
+  }
+  vector<double> newWeights;
+  newWeights.push_back(w_ibf_tmp );
+  newWeights.push_back(w_gain_tmp);
+  newWeights.push_back(_hit_r);
+  newWeights.push_back(_hit_phi);
+  return newWeights;
+}
 
 
 bool IsOverFrame(double r, double phi);
@@ -36,17 +103,17 @@ bool IsOverFrame(double r, double phi){
   //these parameters are taken from Feb 12 drawings of frames.
   double tpc_frame_side_gap=0.8;//mm //space between radial line and start of frame
   double tpc_frame_side_width=2.6;//mm //thickness of frame
-  double tpc_margin=0.0;//mm // extra gap between edge of frame and start of GEM holes
+  double tpc_margin=2.0;//mm // extra gap between edge of frame and start of GEM holes
   
-  double tpc_frame_r3_outer=758.4;//mm inner edge of larger-r frame of r3
-  double tpc_frame_r3_inner=583.5;//mm outer edge of smaller-r frame of r3
+  double tpc_frame_r3_outer=759.11;//758.4;//mm inner edge of larger-r frame of r3
+  double tpc_frame_r3_inner=583.67;//583.5;//mm outer edge of smaller-r frame of r3
  
-  double tpc_frame_r2_outer=574.9;//mm inner edge of larger-r frame of r3
-  double tpc_frame_r2_inner=411.4;//mm outer edge of smaller-r frame of r3
+  double tpc_frame_r2_outer=574.76;//574.9;//mm inner edge of larger-r frame of r3
+  double tpc_frame_r2_inner=411.53;//411.4;//mm outer edge of smaller-r frame of r3
  
-  double tpc_frame_r1_outer=402.6;//mm inner edge of larger-r frame of r3
-  double tpc_frame_r1_inner=221.0;//mm outer edge of smaller-r frame of r3
- 
+  double tpc_frame_r1_outer=402.49;//402.6;//mm inner edge of larger-r frame of r3
+  double tpc_frame_r1_inner=217.83;//221.0;//mm outer edge of smaller-r frame of r3
+
   //double tpc_sec0_phi=0.0;//get_double_param("tpc_sec0_phi");
 
   //if the coordinate is in the radial spaces of the frames, return true:
@@ -79,6 +146,60 @@ bool IsOverFrame(double r, double phi){
   return false;
 }
 
+vector<double> putOnPlane(double r, double phi);
+
+vector<double> putOnPlane(double r, double phi){
+  //these parameters are taken from Feb 12 drawings of frames.
+  double tpc_frame_side_gap=0.8;//mm //space between radial line and start of frame
+  double tpc_frame_side_width=2.6;//mm //thickness of frame
+  double tpc_margin=2.0;//mm // extra gap between edge of frame and start of GEM holes
+  
+  double tpc_frame_r3_outer=759.11;//758.4;//mm inner edge of larger-r frame of r3
+  double tpc_frame_r3_inner=583.67;//583.5;//mm outer edge of smaller-r frame of r3
+ 
+  double tpc_frame_r2_outer=574.76;//574.9;//mm inner edge of larger-r frame of r3
+  double tpc_frame_r2_inner=411.53;//411.4;//mm outer edge of smaller-r frame of r3
+ 
+  double tpc_frame_r1_outer=402.49;//402.6;//mm inner edge of larger-r frame of r3
+  double tpc_frame_r1_inner=217.83;//221.0;//mm outer edge of smaller-r frame of r3
+ 
+  //double tpc_sec0_phi=0.0;//get_double_param("tpc_sec0_phi");
+  double r_0_bin = -1;
+  double phi_0_bin = -1;
+  //if the coordinate is in the radial spaces of the frames, return true:
+  if (r<tpc_frame_r1_inner+tpc_margin)
+    r_0_bin=tpc_frame_r1_inner-r;
+  if (r>tpc_frame_r1_outer-tpc_margin  && r<tpc_frame_r2_inner+tpc_margin)
+    r_0_bin=tpc_frame_r2_inner-tpc_frame_r1_outer;
+  if (r>tpc_frame_r2_outer-tpc_margin  && r<tpc_frame_r3_inner+tpc_margin)
+    r_0_bin=tpc_frame_r3_inner-tpc_frame_r2_outer;
+  if (r>tpc_frame_r3_outer-tpc_margin)
+    r_0_bin=r-tpc_frame_r3_outer;
+
+  //if the coordinate is within gap+width of a sector boundary, return true:
+  //note that this is not a line of constant radius, but a linear distance from a radius.
+
+  //find the two spokes we're between:
+  double pi = 2 * acos(0.0);
+
+  float sectorangle=(pi/6);
+  float nsectors=phi/sectorangle;
+  int nsec=floor(nsectors);
+  float reduced_phi=phi-nsec*sectorangle; //between zero and sixty degrees.
+  float dist_to_previous=r*sin(reduced_phi);
+  float dist_to_next=r*sin(sectorangle-reduced_phi);
+  if (dist_to_previous<tpc_frame_side_gap+tpc_frame_side_width+tpc_margin)
+    //phi_0_bin = 0.0136;
+    phi_0_bin = asin((tpc_frame_side_gap+tpc_frame_side_width+tpc_margin)/r);
+  if (dist_to_next<tpc_frame_side_gap+tpc_frame_side_width+tpc_margin)
+    //phi_0_bin = 0.0136;
+    phi_0_bin = asin((tpc_frame_side_gap+tpc_frame_side_width+tpc_margin)/r);
+  vector<double> r_phi_bin;
+  r_phi_bin.push_back(r_0_bin/2);
+  r_phi_bin.push_back(phi_0_bin);
+  return r_phi_bin;
+}
+
 //____________________________________________________________________________..
 CalculateDistortions::CalculateDistortions(const std::string &name, const std::string &filename):
   SubsysReco(name)
@@ -106,12 +227,15 @@ int CalculateDistortions::Init(PHCompositeNode *topNode)
 {
   int nz=72;
   double z_rdo=108*cm;
+  outfile = new TFile(_filename.c_str(), "RECREATE");
 
   hm = new Fun4AllHistoManager("HITHIST");
-  const int r_bins_N = 51;
-  double r_bins[r_bins_N+1] = {217.83, 311.05, 317.92, 323.31, 329.27, 334.63, 340.59, 345.95, 351.91, 357.27, 363.23, 368.59, 374.55, 379.91, 385.87,
-                              391.23,397.19,402.49,411.53,421.70,431.90,442.11,452.32,462.52,472.73,482.94,493.14,503.35,513.56,523.76,533.97,544.18,554.39,
-                              564.59,574.76,583.67,594.59,605.57,616.54,627.51,638.48,649.45,660.42,671.39,682.36,693.33,704.30,715.27,726.24,737.21,748.18,759.11};
+  const int r_bins_N = 66;//51;
+  double r_bins[r_bins_N+1] = {217.83, 
+                              223.83, 229.83, 235.83, 241.83, 247.83, 253.83, 259.83, 265.83, 271.83, 277.83, 283.83, 289.83, 295.83, 301.83, 306.83,
+                              311.05,317.92,323.31,329.27,334.63,340.59,345.95,351.91,357.27,363.23,368.59,374.55,379.91,385.87,391.23,397.19,402.49,
+                              411.53,421.70,431.90,442.11,452.32,462.52,472.73,482.94,493.14,503.35,513.56,523.76,533.97,544.18,554.39,564.59,574.76,
+                              583.67,594.59,605.57,616.54,627.51,638.48,649.45,660.42,671.39,682.36,693.33,704.30,715.27,726.24,737.21,748.18,759.11};
   const int nphi=205;
   double phi_bins[nphi+1] = {0.,0.0068, 0.038675, 0.07055, 0.102425, 0.1343, 0.166175, 0.19805, 
                             0.229925, 0.2618, 0.293675, 0.32555, 0.357425, 0.3893, 0.421175, 0.45305, 0.484925, 
@@ -143,22 +267,21 @@ int CalculateDistortions::Init(PHCompositeNode *topNode)
   _h_DC_E = new TH2F("_h_DC_E" ,"_h_DC_E;SC;E#times10^{6}"   ,2000,-100,2e5-100,1000,-50,1e3-50);
   char name[100];
   char name_ax[100];
-  for(int i=0;i<10;i++){ 
-    sprintf(name, "_h_SC_ibf_%d", i);
-    sprintf(name_ax, "_h_SC_ibf_%d;#phi, [rad];R, [m];Z, [m]", i);
-    _h_SC_ibf[i]  = new TH3F(name ,name_ax ,nphi,phi_bins,r_bins_N ,r_bins,2*nz,z_bins);
-    sprintf(name, "_h_SC_prim_%d", i);
-    sprintf(name_ax, "_h_SC_prim_%d;#phi, [rad];R, [m];Z, [m]", i);
-    _h_SC_prim[i] = new TH3F(name ,name_ax ,nphi,phi_bins,r_bins_N ,r_bins,2*nz,z_bins);
+  for(int iz=0;iz<30;iz++){ 
+    sprintf(name, "_h_SC_ibf_%d", iz);
+    sprintf(name_ax, "_h_SC_ibf_%d;#phi, [rad];R, [m];Z, [m]", iz);
+    _h_SC_ibf[iz]  = new TH3F(name ,name_ax ,nphi,phi_bins,r_bins_N ,r_bins,2*nz,z_bins);
+    sprintf(name, "_h_SC_prim_%d", iz);
+    sprintf(name_ax, "_h_SC_prim_%d;#phi, [rad];R, [m];Z, [m]", iz);
+    _h_SC_prim[iz] = new TH3F(name ,name_ax ,nphi,phi_bins,r_bins_N ,r_bins,2*nz,z_bins);
 
-    hm->registerHisto(_h_SC_prim[i]);
-    hm->registerHisto(_h_SC_ibf[i] );
+    hm->registerHisto(_h_SC_prim[iz]);
+    hm->registerHisto(_h_SC_ibf[iz] );
   }
   hm->registerHisto(_h_hits );
   hm->registerHisto(_h_R );
   hm->registerHisto(_h_DC_E );
 
-  outfile = new TFile(_filename.c_str(), "RECREATE");
   //_event_timestamp = 0;
   _hit_eion  = 0;
   _hit_r   = 0;
@@ -262,8 +385,8 @@ int CalculateDistortions::process_event(PHCompositeNode *topNode)
   if (hits){
     PHG4HitContainer::ConstRange hit_range = hits->getHits();
       for (PHG4HitContainer::ConstIterator hit_iter = hit_range.first; hit_iter != hit_range.second; hit_iter++){
-        int f_fill_prim[10]={0,0,0,0,0,0,0,0,0,0};
-        int f_fill_ibf[10]={0,0,0,0,0,0,0,0,0,0};
+        int f_fill_prim[30]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+        int f_fill_ibf[30]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
         float hit_x0 = hit_iter->second->get_x(0);
         float hit_y0 = hit_iter->second->get_y(0);
@@ -282,20 +405,50 @@ int CalculateDistortions::process_event(PHCompositeNode *topNode)
         float phi=atan2(x,y);
         if (phi<0) phi+=2*pi;
 
+        // Shift electrons according to the field maps       
+        Shifter s("/sphenix/user/rcorliss/distortion_maps/2021.04/apr07.average.real_B1.4_E-400.0.ross_phi1_sphenix_phislice_lookup_r26xp40xz40.distortion_map.hist.root"); 
+        TVector3 oldPos(x/cm,y/cm,z/cm); 
+        TVector3 newPos;
+        if (_shiftElectrons==1) {
+          if (oldPos.z() < 0) { 
+            oldPos.SetZ(abs(oldPos.z()));
+            newPos = s.ShiftForward(oldPos);
+            newPos.SetZ(newPos.z() * -1);
+          }else{
+            newPos = s.ShiftForward(oldPos);
+          }
+        }else {
+          newPos.SetZ(oldPos.Z());
+          newPos.SetX(oldPos.X());
+          newPos.SetY(oldPos.Y());
+        }
+
         //Reading IBF and Gain weights according to X-Y position
         float w_ibf = 1.;
         float w_gain = 1.;
+        
         if(_fUseIBFMap){
           int bin_x = _h_modules_anode ->GetXaxis()->FindBin(x/mm);
           int bin_y = _h_modules_anode ->GetYaxis()->FindBin(y/mm);
           w_ibf = _h_modules_measuredibf->GetBinContent(bin_x,bin_y);
           w_gain = _h_modules_anode->GetBinContent(bin_x,bin_y);
-          }
+        }
         float ionsPerEle=w_gain*_ampGain*w_ibf*_ampIBFfrac;
 
+        //Check that it is on the frame        
         _isOnPlane = 0;
-        if(!IsOverFrame(r/mm,phi)){
+        double dr_bin=-1;
+        double dphi_bin=-1;
+        double new_phi=newPos.Phi();
+        double new_r=newPos.Perp()*cm;
+        if (new_phi<0) new_phi+=2*pi;
+        if(!IsOverFrame(new_r,new_phi)){
           _isOnPlane = 1;
+        }else{
+          vector<double> r_phi_bin = putOnPlane(r/mm, phi);
+          dr_bin=r_phi_bin[0];
+          dphi_bin=r_phi_bin[1];
+          //cout<<"dr_bin="<<dr_bin<<"dphi_bin="<<dphi_bin<<endl;
         }
         _hit_z = z;
         _hit_r = r;
@@ -303,14 +456,21 @@ int CalculateDistortions::process_event(PHCompositeNode *topNode)
         _hit_eion = hit_eion;
         _ibf_vol = N_electrons*ionsPerEle;
         _amp_ele_vol = w_gain*_ampGain;
+        if (new_r<210 || new_r>770) continue;
   	    if(_fSliming==1)_rawHits->Fill();
-        double z_prim[10] = {-1*1e10,-1*1e10,-1*1e10,-1*1e10,-1*1e10,-1*1e10,-1*1e10,-1*1e10,-1*1e10,-1*1e10};
-        double z_ibf[10] = {-1*1e10,-1*1e10,-1*1e10,-1*1e10,-1*1e10,-1*1e10,-1*1e10,-1*1e10,-1*1e10,-1*1e10};
+        double z_prim[30] = {-1*1e10,-1*1e10,-1*1e10,-1*1e10,-1*1e10,-1*1e10,-1*1e10,-1*1e10,-1*1e10,-1*1e10,
+                            -1*1e10,-1*1e10,-1*1e10,-1*1e10,-1*1e10,-1*1e10,-1*1e10,-1*1e10,-1*1e10,-1*1e10,
+                            -1*1e10,-1*1e10,-1*1e10,-1*1e10,-1*1e10,-1*1e10,-1*1e10,-1*1e10,-1*1e10,-1*1e10
+                            };
+        double z_ibf[30] = {-1*1e10,-1*1e10,-1*1e10,-1*1e10,-1*1e10,-1*1e10,-1*1e10,-1*1e10,-1*1e10,-1*1e10,
+                            -1*1e10,-1*1e10,-1*1e10,-1*1e10,-1*1e10,-1*1e10,-1*1e10,-1*1e10,-1*1e10,-1*1e10,
+                            -1*1e10,-1*1e10,-1*1e10,-1*1e10,-1*1e10,-1*1e10,-1*1e10,-1*1e10,-1*1e10,-1*1e10
+                            };
 
         if(_hit_z>=5*mm && _hit_z<1.055*m){
           n_hits++;
           _h_DC_E->Fill(_ibf_vol,hit_eion*1e6);
-          for(int iz=0;iz<10;iz++){
+          for(int iz=0;iz<30;iz++){
             bX = _beamxing[iz];
             //bX_end = _beamxing_end[iz];
             if(_event_bunchXing<=bX){
@@ -333,7 +493,7 @@ int CalculateDistortions::process_event(PHCompositeNode *topNode)
         if(_hit_z<-5*mm && _hit_z>-1.055*m){
           n_hits++;
           _h_DC_E->Fill(_ibf_vol,hit_eion*1e6);
-          for(int iz=0;iz<10;iz++){
+          for(int iz=0;iz<30;iz++){
             bX = _beamxing[iz];
             //bX_end = _beamxing_end[iz];
             if(_event_bunchXing<=bX){
@@ -353,16 +513,33 @@ int CalculateDistortions::process_event(PHCompositeNode *topNode)
             }
           }
         }
-        //if(n_hits<5)cout<<"z_bias_avg="<<z_bias_avg<<" IBF ="<<z_ibf<<" prim ="<<z_prim<<endl;
 
         double w_prim = _hit_eion*Tpc_ElectronsPerGeV;
-        for(int iz=0;iz<10;iz++){
+        for(int iz=0;iz<30;iz++){
           if(f_fill_prim[iz]==1){
             _h_SC_prim[iz] ->Fill(_hit_phi,_hit_r,z_prim[iz],w_prim);
           }
-          //if(/*_isOnPlane &&*/ f_fill_ibf[iz]==1){
-          if( f_fill_ibf[iz]==1){
-            _h_SC_ibf[iz] ->Fill(_hit_phi,_hit_r,z_ibf[iz],_ibf_vol);
+          if( f_fill_ibf[iz]==1){  
+            double w_ibf_tmp=1.0; 
+            double w_gain_tmp=1.0;
+            if(!_isOnPlane ){
+              //Redistribute charges
+              //vector<double> newWeights = getNewWeights(_h_SC_ibf[iz], _h_modules_anode, _h_modules_measuredibf, _hit_r, _hit_phi, dr_bin, dphi_bin, _fUseIBFMap);
+              vector<double> newWeights = getNewWeights(_h_SC_ibf[iz], _h_modules_anode, _h_modules_measuredibf, new_r, new_phi, dr_bin, dphi_bin, _fUseIBFMap);
+
+              w_ibf_tmp  = newWeights[0];
+              w_gain_tmp = newWeights[1];
+              _hit_r = newWeights[2];
+              _hit_phi = newWeights[3];
+
+              _ibf_vol = N_electrons*w_gain_tmp*_ampGain*w_ibf_tmp*_ampIBFfrac;
+              _h_SC_ibf[iz] ->Fill(_hit_phi,_hit_r,z_ibf[iz],_ibf_vol);
+
+            }else{
+              _h_SC_ibf[iz] ->Fill(new_phi,new_r,z_ibf[iz],_ibf_vol);
+            }
+
+
           }
         }
         if( f_fill_ibf[0]==1){
@@ -395,14 +572,15 @@ int CalculateDistortions::EndRun(const int runnumber)
 //____________________________________________________________________________..
 int CalculateDistortions::End(PHCompositeNode *topNode)
 {
+  cout<<"CalculateDistortions::End"<<endl;
   if(_fSliming==1){
     outfile->cd();
     outfile->Write();
     outfile->Close();
     delete outfile;
-    for(int i=0;i<10;i++){ 
-      _h_SC_prim[i] ->Sumw2( false );
-      _h_SC_ibf[i] ->Sumw2( false );
+    for(int iz=0;iz<30;iz++){ 
+      _h_SC_prim[iz] ->Sumw2( false );
+      _h_SC_ibf[iz] ->Sumw2( false );
     }
 
     _h_hits    ->Sumw2( false );
@@ -410,6 +588,7 @@ int CalculateDistortions::End(PHCompositeNode *topNode)
     _h_R     ->Sumw2( false );
     hm->dumpHistos(_filename, "UPDATE");
   }else{
+    cout<<"Writing File:"<<_filename<<endl;
     hm->dumpHistos(_filename, "RECREATE");
   }
 
@@ -479,5 +658,12 @@ void CalculateDistortions::UseSliming(int fSliming){
   _fSliming = fSliming;
   std::string s_sliming[2] = {"OFF","ON"};
   cout<<"Sliming is set to: "<<s_sliming[_fSliming]<<endl;
+
+}
+
+void CalculateDistortions::UseFieldMaps(int shiftElectrons){
+  _shiftElectrons = shiftElectrons;
+  std::string s_shiftElectrons[2] = {"OFF","ON"};
+  cout<<"Use Field-Maps is set to: "<<s_shiftElectrons[_shiftElectrons]<<endl;
 
 }

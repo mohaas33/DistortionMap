@@ -72,8 +72,8 @@ void Fun4All_FillChargesMap_300evts(  const int nEvents = 10, const int eventsIn
   int index=0; 
   index = std::distance(bXs.begin(), it);
   cout<<"Index="<<index<<endl;
-  for(int n=0;n<10;n++){
-    int bXN=index+n*1000;
+  for(int n=0;n<30;n++){
+    int bXN=index+n*300;
     bXs_sel.push_back(bXs[bXN]);
     //int n_bX = closest(bXs, bXs[bXN]);
     //bXs_sel_end.push_back(n_bX); 
@@ -92,11 +92,13 @@ void Fun4All_FillChargesMap_300evts(  const int nEvents = 10, const int eventsIn
   dist_calc->SetBeamXing(bXs_sel);// Set beam crosssing bias
   //dist_calc->SetBeamXingEnd(bXs_sel_end);// Set last beam crosssing for the biases
   //dist_calc->SetAvg(1); //Set average calculation
-  dist_calc->SetUseIBFMap(false);
+  dist_calc->SetUseIBFMap(true);//false);
   //dist_calc->SetGain(2e3*48.7/71.5);
   dist_calc->SetGain(1400);
   dist_calc->SetIBF(0.004);
   dist_calc->UseSliming(0);//Turn off TTree filling and recording
+
+  dist_calc->UseFieldMaps(1); //setting field maps to shift electron position
   //Set pp colliding system
   dist_calc->SetCollSyst(0); //setting pp with = 1
 

@@ -74,6 +74,7 @@ class CalculateDistortions : public SubsysReco
   void SetCollSyst(int coll_syst=0);
   void SetAvg(int fAvg=0);
   void UseSliming(int fSliming=0);
+  void UseFieldMaps(int shiftElectrons=0);
 
   double pi = 2 * acos(0.0);
 
@@ -87,7 +88,7 @@ class CalculateDistortions : public SubsysReco
    float _ampGain;
    float _ampIBFfrac;
    int _collSyst;
-
+   int _shiftElectrons;
  private:
    double _freqKhz = 22;
    //int _beamxing = 0;
@@ -114,8 +115,8 @@ class CalculateDistortions : public SubsysReco
    TH1*   _h_hits;
    TH1*   _h_R;
    TH2*   _h_DC_E;
-   TH3*   _h_SC_prim[10];
-   TH3*   _h_SC_ibf[10];
+   TH3*   _h_SC_prim[30];
+   TH3*   _h_SC_ibf[30];
 
 
    float f=0.5;//for now, just pick the middle of the hit.  Do better later.

@@ -12,7 +12,7 @@ do
     A=$( printf '%06d' $Xstart )
     B=$( printf '%06d' $Xend )
     fname="/sphenix/sim/sim01/sphnxpro/Micromegas/3/G4Hits_sHijing_0-12fm_"$A"_"$B".root" ;
-    foutputname="./Files/avg_ADCBins_NoW_hist_G4Hits_sHijing_0-12fm_bX"$bX"_"$A"_"$B".root" ;
+    foutputname="./Files/avg_ADCBins_UseFieldMaps_hist_G4Hits_sHijing_0-12fm_bX"$bX"_"$A"_"$B".root" ;
     echo $fname ;
     echo $foutputname ;
     root -l -b -q ./macros/Fun4All_FillChargesMap_300evts.C\(1000,$Xstart,$bX,\"$fname\",\"$foutputname\"\)
