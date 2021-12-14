@@ -374,12 +374,14 @@ int CalculateDistortions::process_event(PHCompositeNode *topNode)
   _event_timestamp = (float)_timestamps[key]*ns;//units in seconds
   _event_bunchXing = key;
 
-  if(_evtstart%100==0) cout<<"_evtstart = "<<_evtstart<<endl;
+  if(_evtstart%10==0) cout<<"_evtstart = "<<_evtstart<<endl;
   _evtstart++;
   ostringstream nodename;
   set<std::string>::const_iterator iter;
   nodename << "G4HIT_TPC";
 
+  Shifter s("/sphenix/user/rcorliss/distortion_maps/2021.04/apr07.average.real_B1.4_E-400.0.ross_phi1_sphenix_phislice_lookup_r26xp40xz40.distortion_map.hist.root"); 
+  
   PHG4HitContainer *hits = findNode::getClass<PHG4HitContainer>(topNode, nodename.str().c_str());
   int n_hits = 0;
   if (hits){
@@ -406,7 +408,6 @@ int CalculateDistortions::process_event(PHCompositeNode *topNode)
         if (phi<0) phi+=2*pi;
 
         // Shift electrons according to the field maps       
-        Shifter s("/sphenix/user/rcorliss/distortion_maps/2021.04/apr07.average.real_B1.4_E-400.0.ross_phi1_sphenix_phislice_lookup_r26xp40xz40.distortion_map.hist.root"); 
         TVector3 oldPos(x/cm,y/cm,z/cm); 
         TVector3 newPos;
         if (_shiftElectrons==1) {
@@ -490,6 +491,7 @@ int CalculateDistortions::process_event(PHCompositeNode *topNode)
             }
           }
         }
+
         if(_hit_z<-5*mm && _hit_z>-1.055*m){
           n_hits++;
           _h_DC_E->Fill(_ibf_vol,hit_eion*1e6);
@@ -524,8 +526,8 @@ int CalculateDistortions::process_event(PHCompositeNode *topNode)
             double w_gain_tmp=1.0;
             if(!_isOnPlane ){
               //Redistribute charges
-              //vector<double> newWeights = getNewWeights(_h_SC_ibf[iz], _h_modules_anode, _h_modules_measuredibf, _hit_r, _hit_phi, dr_bin, dphi_bin, _fUseIBFMap);
-              vector<double> newWeights = getNewWeights(_h_SC_ibf[iz], _h_modules_anode, _h_modules_measuredibf, new_r, new_phi, dr_bin, dphi_bin, _fUseIBFMap);
+              vector<double> newWeights = getNewWeights(_h_SC_ibf[iz], _h_modules_anode, _h_modules_measuredibf, _hit_r, _hit_phi, dr_bin, dphi_bin, _fUseIBFMap);
+              //vector<double> newWeights = getNewWeights(_h_SC_ibf[iz], _h_modules_anode, _h_modules_measuredibf, new_r, new_phi, dr_bin, dphi_bin, _fUseIBFMap);
 
               w_ibf_tmp  = newWeights[0];
               w_gain_tmp = newWeights[1];
@@ -534,24 +536,27 @@ int CalculateDistortions::process_event(PHCompositeNode *topNode)
 
               _ibf_vol = N_electrons*w_gain_tmp*_ampGain*w_ibf_tmp*_ampIBFfrac;
               _h_SC_ibf[iz] ->Fill(_hit_phi,_hit_r,z_ibf[iz],_ibf_vol);
-
             }else{
               _h_SC_ibf[iz] ->Fill(new_phi,new_r,z_ibf[iz],_ibf_vol);
             }
 
 
           }
+
         }
+
         if( f_fill_ibf[0]==1){
           _h_R ->Fill(_hit_r);
           
         }
+
       }
 
   }else{
     if(_fSliming==1)_rawHits->Fill();
   }
   _h_hits->Fill(n_hits);
+
   return 0;
 }
 

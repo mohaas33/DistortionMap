@@ -20,7 +20,7 @@ introduction = [
     "# Jobs by default get 1.4Gb of RAM allocated, ask for more if needed",
     "# but if a job needs more than 2Gb it will not be able to run on the",
     "# older nodes",
-    "request_memory = 7.1GB",
+    "request_memory = 12.1 GB",
     "",
     "# If you need multiple cores you can ask for them, but the scheduling",
     "# may take longer the \"larger\" a job you ask for",
